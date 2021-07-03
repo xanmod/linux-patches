@@ -1,0 +1,355 @@
+From 8638a5a78e8bd2c151b13e38b7eddb423ffad183 Mon Sep 17 00:00:00 2001
+From: Christian Brauner <christian@brauner.io>
+Date: Wed, 16 Jan 2019 23:13:25 +0100
+Subject: [PATCH 2/3] SAUCE: binder: turn into module
+
+The Android binder driver needs to become a module for the sake of shipping
+Anbox. To do this we need to export the following functions since binder is
+currently still using them:
+
+- security_binder_set_context_mgr()
+- security_binder_transaction()
+- security_binder_transfer_binder()
+- security_binder_transfer_file()
+- can_nice()
+- __close_fd_get_file()
+- mmput_async()
+- task_work_add()
+- map_kernel_range_noflush()
+- get_vm_area()
+- zap_page_range()
+- put_ipc_ns()
+- get_ipc_ns_exported()
+- show_init_ipc_ns()
+
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+[ saf: fix additional reference to init_ipc_ns from 5.0-rc6 ]
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+---
+ drivers/android/Kconfig           |  6 +++---
+ drivers/android/Makefile          | 10 +++++++---
+ drivers/android/binder.c          | 17 ++++++++++++++---
+ drivers/android/binder_alloc.h    |  3 ++-
+ drivers/android/binder_internal.h |  5 +++--
+ drivers/android/binderfs.c        |  6 +++---
+ fs/file.c                         |  1 +
+ include/linux/ipc_namespace.h     |  3 +++
+ ipc/namespace.c                   | 17 +++++++++++++++++
+ kernel/fork.c                     |  1 +
+ kernel/sched/core.c               |  1 +
+ kernel/task_work.c                |  1 +
+ mm/memory.c                       |  1 +
+ mm/vmalloc.c                      |  2 ++
+ security/security.c               |  4 ++++
+ 15 files changed, 63 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/android/Kconfig b/drivers/android/Kconfig
+index 53b22e26266c..2d821ed78453 100644
+--- a/drivers/android/Kconfig
++++ b/drivers/android/Kconfig
+@@ -9,7 +9,7 @@ config ANDROID
+ if ANDROID
+ 
+ config ANDROID_BINDER_IPC
+-	bool "Android Binder IPC Driver"
++	tristate "Android Binder IPC Driver"
+ 	depends on MMU
+ 	default n
+ 	help
+@@ -21,8 +21,8 @@ config ANDROID_BINDER_IPC
+ 	  between said processes.
+ 
+ config ANDROID_BINDERFS
+-	bool "Android Binderfs filesystem"
+-	depends on ANDROID_BINDER_IPC
++	tristate "Android Binderfs filesystem"
++	depends on (ANDROID_BINDER_IPC=y) || (ANDROID_BINDER_IPC=m && m)
+ 	default n
+ 	help
+ 	  Binderfs is a pseudo-filesystem for the Android Binder IPC driver
+diff --git a/drivers/android/Makefile b/drivers/android/Makefile
+index c9d3d0c99c25..b9d5ce8deca2 100644
+--- a/drivers/android/Makefile
++++ b/drivers/android/Makefile
+@@ -1,6 +1,10 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+ ccflags-y += -I$(src)			# needed for trace events
+ 
+-obj-$(CONFIG_ANDROID_BINDERFS)		+= binderfs.o
+-obj-$(CONFIG_ANDROID_BINDER_IPC)	+= binder.o binder_alloc.o
+-obj-$(CONFIG_ANDROID_BINDER_IPC_SELFTEST) += binder_alloc_selftest.o
++binder_linux-y := binder.o binder_alloc.o
++obj-$(CONFIG_ANDROID_BINDER_IPC) += binder_linux.o
++binder_linux-$(CONFIG_ANDROID_BINDERFS) += binderfs.o
++binder_linux-$(CONFIG_ANDROID_BINDER_IPC_SELFTEST) += binder_alloc_selftest.o
++
++# binder-$(CONFIG_ANDROID_BINDER_IPC) := binder.o binder_alloc.o
++# binder-$(CONFIG_ANDROID_BINDERFS) += binderfs.o
+diff --git a/drivers/android/binder.c b/drivers/android/binder.c
+index c119736ca56a..569850551e88 100644
+--- a/drivers/android/binder.c
++++ b/drivers/android/binder.c
+@@ -5788,9 +5788,20 @@ static int __init binder_init(void)
+ 	return ret;
+ }
+ 
+-device_initcall(binder_init);
++module_init(binder_init);
++/*
++ * binder will have no exit function since binderfs instances can be mounted
++ * multiple times and also in user namespaces finding and destroying them all
++ * is not feasible without introducing insane locking. Just ignoring existing
++ * instances on module unload also wouldn't work since we would loose track of
++ * what major numer was dynamically allocated and also what minor numbers are
++ * already given out. So this would get us into all kinds of issues with device
++ * number reuse. So simply don't allow unloading unless we are forced to do so.
++ */
++
++MODULE_AUTHOR("Google, Inc.");
++MODULE_DESCRIPTION("Driver for Android binder device");
++MODULE_LICENSE("GPL v2");
+ 
+ #define CREATE_TRACE_POINTS
+ #include "binder_trace.h"
+-
+-MODULE_LICENSE("GPL v2");
+diff --git a/drivers/android/binder_alloc.h b/drivers/android/binder_alloc.h
+index 6e8e001381af..e4e0678e2781 100644
+--- a/drivers/android/binder_alloc.h
++++ b/drivers/android/binder_alloc.h
+@@ -6,6 +6,7 @@
+ #ifndef _LINUX_BINDER_ALLOC_H
+ #define _LINUX_BINDER_ALLOC_H
+ 
++#include <linux/kconfig.h>
+ #include <linux/rbtree.h>
+ #include <linux/list.h>
+ #include <linux/mm.h>
+@@ -109,7 +110,7 @@ struct binder_alloc {
+ 	size_t pages_high;
+ };
+ 
+-#ifdef CONFIG_ANDROID_BINDER_IPC_SELFTEST
++#if IS_ENABLED(CONFIG_ANDROID_BINDER_IPC_SELFTEST)
+ void binder_selftest_alloc(struct binder_alloc *alloc);
+ #else
+ static inline void binder_selftest_alloc(struct binder_alloc *alloc) {}
+diff --git a/drivers/android/binder_internal.h b/drivers/android/binder_internal.h
+index 6cd79011e35d..da5bcb3203dc 100644
+--- a/drivers/android/binder_internal.h
++++ b/drivers/android/binder_internal.h
+@@ -5,6 +5,7 @@
+ 
+ #include <linux/export.h>
+ #include <linux/fs.h>
++#include <linux/kconfig.h>
+ #include <linux/list.h>
+ #include <linux/miscdevice.h>
+ #include <linux/mutex.h>
+@@ -77,7 +78,7 @@ extern const struct file_operations binder_fops;
+ 
+ extern char *binder_devices_param;
+ 
+-#ifdef CONFIG_ANDROID_BINDERFS
++#if IS_ENABLED(CONFIG_ANDROID_BINDERFS)
+ extern bool is_binderfs_device(const struct inode *inode);
+ extern struct dentry *binderfs_create_file(struct dentry *dir, const char *name,
+ 					   const struct file_operations *fops,
+@@ -98,7 +99,7 @@ static inline struct dentry *binderfs_create_file(struct dentry *dir,
+ static inline void binderfs_remove_file(struct dentry *dentry) {}
+ #endif
+ 
+-#ifdef CONFIG_ANDROID_BINDERFS
++#if IS_ENABLED(CONFIG_ANDROID_BINDERFS)
+ extern int __init init_binderfs(void);
+ #else
+ static inline int __init init_binderfs(void)
+diff --git a/drivers/android/binderfs.c b/drivers/android/binderfs.c
+index e80ba93c62a9..1a18e9dbb2a6 100644
+--- a/drivers/android/binderfs.c
++++ b/drivers/android/binderfs.c
+@@ -113,7 +113,7 @@ static int binderfs_binder_device_create(struct inode *ref_inode,
+ 	struct super_block *sb = ref_inode->i_sb;
+ 	struct binderfs_info *info = sb->s_fs_info;
+ #if defined(CONFIG_IPC_NS)
+-	bool use_reserve = (info->ipc_ns == &init_ipc_ns);
++	bool use_reserve = (info->ipc_ns == show_init_ipc_ns());
+ #else
+ 	bool use_reserve = true;
+ #endif
+@@ -402,7 +402,7 @@ static int binderfs_binder_ctl_create(struct super_block *sb)
+ 	struct dentry *root = sb->s_root;
+ 	struct binderfs_info *info = sb->s_fs_info;
+ #if defined(CONFIG_IPC_NS)
+-	bool use_reserve = (info->ipc_ns == &init_ipc_ns);
++	bool use_reserve = (info->ipc_ns == show_init_ipc_ns());
+ #else
+ 	bool use_reserve = true;
+ #endif
+@@ -682,7 +682,7 @@ static int binderfs_fill_super(struct super_block *sb, struct fs_context *fc)
+ 		return -ENOMEM;
+ 	info = sb->s_fs_info;
+ 
+-	info->ipc_ns = get_ipc_ns(current->nsproxy->ipc_ns);
++	info->ipc_ns = get_ipc_ns_exported(current->nsproxy->ipc_ns);
+ 
+ 	info->root_gid = make_kgid(sb->s_user_ns, 0);
+ 	if (!gid_valid(info->root_gid))
+diff --git a/fs/file.c b/fs/file.c
+index f633348029a5..b56c4dd78a19 100644
+--- a/fs/file.c
++++ b/fs/file.c
+@@ -771,6 +771,7 @@ int __close_fd_get_file(unsigned int fd, struct file **res)
+ 	*res = NULL;
+ 	return -ENOENT;
+ }
++EXPORT_SYMBOL(close_fd_get_file);
+ 
+ /*
+  * variant of close_fd that gets a ref on the file for later fput.
+diff --git a/include/linux/ipc_namespace.h b/include/linux/ipc_namespace.h
+index 05e22770af51..3ccd19f13f5c 100644
+--- a/include/linux/ipc_namespace.h
++++ b/include/linux/ipc_namespace.h
+@@ -120,6 +120,9 @@ extern int mq_init_ns(struct ipc_namespace *ns);
+ static inline int mq_init_ns(struct ipc_namespace *ns) { return 0; }
+ #endif
+ 
++extern struct ipc_namespace *get_ipc_ns_exported(struct ipc_namespace *ns);
++extern struct ipc_namespace *show_init_ipc_ns(void);
++
+ #if defined(CONFIG_IPC_NS)
+ extern struct ipc_namespace *copy_ipcs(unsigned long flags,
+ 	struct user_namespace *user_ns, struct ipc_namespace *ns);
+diff --git a/ipc/namespace.c b/ipc/namespace.c
+index 7bd0766ddc3b..2bb05b2dacd1 100644
+--- a/ipc/namespace.c
++++ b/ipc/namespace.c
+@@ -172,6 +172,23 @@ void put_ipc_ns(struct ipc_namespace *ns)
+ 			schedule_work(&free_ipc_work);
+ 	}
+ }
++EXPORT_SYMBOL(put_ipc_ns);
++
++struct ipc_namespace *get_ipc_ns_exported(struct ipc_namespace *ns)
++{
++	return get_ipc_ns(ns);
++}
++EXPORT_SYMBOL(get_ipc_ns_exported);
++
++struct ipc_namespace *show_init_ipc_ns(void)
++{
++#if defined(CONFIG_IPC_NS)
++	return &init_ipc_ns;
++#else
++	return NULL;
++#endif
++}
++EXPORT_SYMBOL(show_init_ipc_ns);
+ 
+ static inline struct ipc_namespace *to_ipc_ns(struct ns_common *ns)
+ {
+diff --git a/kernel/fork.c b/kernel/fork.c
+index a02dd27c6e5c..c54400f24fb2 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1136,6 +1136,7 @@ void mmput_async(struct mm_struct *mm)
+ 		schedule_work(&mm->async_put_work);
+ 	}
+ }
++EXPORT_SYMBOL(mmput_async);
+ #endif
+ 
+ /**
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index bd626dbdb816..e58b0ba683a1 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -5766,6 +5766,7 @@ int can_nice(const struct task_struct *p, const int nice)
+ 	return (nice_rlim <= task_rlimit(p, RLIMIT_NICE) ||
+ 		capable(CAP_SYS_NICE));
+ }
++EXPORT_SYMBOL(can_nice);
+ 
+ #ifdef __ARCH_WANT_SYS_NICE
+ 
+diff --git a/kernel/task_work.c b/kernel/task_work.c
+index 9cde961875c0..5c8dea45d4f8 100644
+--- a/kernel/task_work.c
++++ b/kernel/task_work.c
+@@ -57,6 +57,7 @@ int task_work_add(struct task_struct *task, struct callback_head *work,
+ 
+ 	return 0;
+ }
++EXPORT_SYMBOL(task_work_add);
+ 
+ /**
+  * task_work_cancel - cancel a pending work added by task_work_add()
+diff --git a/mm/memory.c b/mm/memory.c
+index 9a6cb6d31430..a1332ba9c0da 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -1549,6 +1549,7 @@ void zap_page_range(struct vm_area_struct *vma, unsigned long start,
+ 	mmu_notifier_invalidate_range_end(&range);
+ 	tlb_finish_mmu(&tlb);
+ }
++EXPORT_SYMBOL(zap_page_range);
+ 
+ /**
+  * zap_page_range_single - remove user pages in a given range
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index 4f5f8c907897..64ab133ee816 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -316,6 +316,7 @@ int map_kernel_range_noflush(unsigned long addr, unsigned long size,
+ 
+ 	return 0;
+ }
++EXPORT_SYMBOL(map_kernel_range_noflush);
+ 
+ int map_kernel_range(unsigned long start, unsigned long size, pgprot_t prot,
+ 		struct page **pages)
+@@ -2131,6 +2132,7 @@ struct vm_struct *get_vm_area(unsigned long size, unsigned long flags)
+ 				  NUMA_NO_NODE, GFP_KERNEL,
+ 				  __builtin_return_address(0));
+ }
++EXPORT_SYMBOL(get_vm_area);
+ 
+ struct vm_struct *get_vm_area_caller(unsigned long size, unsigned long flags,
+ 				const void *caller)
+diff --git a/security/security.c b/security/security.c
+index 5ac96b16f8fa..8ef0ce0faba7 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -727,24 +727,28 @@ int security_binder_set_context_mgr(struct task_struct *mgr)
+ {
+ 	return call_int_hook(binder_set_context_mgr, 0, mgr);
+ }
++EXPORT_SYMBOL(security_binder_set_context_mgr);
+ 
+ int security_binder_transaction(struct task_struct *from,
+ 				struct task_struct *to)
+ {
+ 	return call_int_hook(binder_transaction, 0, from, to);
+ }
++EXPORT_SYMBOL(security_binder_transaction);
+ 
+ int security_binder_transfer_binder(struct task_struct *from,
+ 				    struct task_struct *to)
+ {
+ 	return call_int_hook(binder_transfer_binder, 0, from, to);
+ }
++EXPORT_SYMBOL(security_binder_transfer_binder);
+ 
+ int security_binder_transfer_file(struct task_struct *from,
+ 				  struct task_struct *to, struct file *file)
+ {
+ 	return call_int_hook(binder_transfer_file, 0, from, to, file);
+ }
++EXPORT_SYMBOL(security_binder_transfer_file);
+ 
+ int security_ptrace_access_check(struct task_struct *child, unsigned int mode)
+ {
+-- 
+2.30.2
+

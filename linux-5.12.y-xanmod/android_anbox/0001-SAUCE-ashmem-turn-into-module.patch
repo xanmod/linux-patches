@@ -1,0 +1,91 @@
+From 401ec2a16d7b044c37a7c204d6e923cd7e3aa7d0 Mon Sep 17 00:00:00 2001
+From: Christian Brauner <christian@brauner.io>
+Date: Wed, 20 Jun 2018 19:21:37 +0200
+Subject: [PATCH 1/3] SAUCE: ashmem: turn into module
+
+The Android ashmem driver needs to become a module for the sake of Anbox.
+To do this we need to export shmem_zero_setup() since ashmem is currently
+using is.
+Note, the abomination that is the Android ashmem driver will go away in the
+not so distant future in favour of memfds.
+
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+---
+ drivers/staging/android/Kconfig  |  2 +-
+ drivers/staging/android/Makefile |  3 ++-
+ drivers/staging/android/ashmem.c | 17 ++++++++++++++++-
+ mm/shmem.c                       |  1 +
+ 4 files changed, 20 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/staging/android/Kconfig b/drivers/staging/android/Kconfig
+index 70498adb1575..5c35653ed36d 100644
+--- a/drivers/staging/android/Kconfig
++++ b/drivers/staging/android/Kconfig
+@@ -4,7 +4,7 @@ menu "Android"
+ if ANDROID
+ 
+ config ASHMEM
+-	bool "Enable the Anonymous Shared Memory Subsystem"
++	tristate "Enable the Anonymous Shared Memory Subsystem"
+ 	depends on SHMEM
+ 	help
+ 	  The ashmem subsystem is a new shared memory allocator, similar to
+diff --git a/drivers/staging/android/Makefile b/drivers/staging/android/Makefile
+index e9a55a5e6529..3d794218dd4b 100644
+--- a/drivers/staging/android/Makefile
++++ b/drivers/staging/android/Makefile
+@@ -1,4 +1,5 @@
+ # SPDX-License-Identifier: GPL-2.0
+ ccflags-y += -I$(src)			# needed for trace events
+ 
+-obj-$(CONFIG_ASHMEM)			+= ashmem.o
++ashmem_linux-y				+= ashmem.o
++obj-$(CONFIG_ASHMEM)			+= ashmem_linux.o
+diff --git a/drivers/staging/android/ashmem.c b/drivers/staging/android/ashmem.c
+index d66a64e42273..e28d9a2ce7f1 100644
+--- a/drivers/staging/android/ashmem.c
++++ b/drivers/staging/android/ashmem.c
+@@ -19,6 +19,7 @@
+ #include <linux/security.h>
+ #include <linux/mm.h>
+ #include <linux/mman.h>
++#include <linux/module.h>
+ #include <linux/uaccess.h>
+ #include <linux/personality.h>
+ #include <linux/bitops.h>
+@@ -964,4 +965,18 @@ static int __init ashmem_init(void)
+ out:
+ 	return ret;
+ }
+-device_initcall(ashmem_init);
++
++static void __exit ashmem_exit(void)
++{
++	misc_deregister(&ashmem_misc);
++	unregister_shrinker(&ashmem_shrinker);
++	kmem_cache_destroy(ashmem_range_cachep);
++	kmem_cache_destroy(ashmem_area_cachep);
++}
++
++module_init(ashmem_init);
++module_exit(ashmem_exit);
++
++MODULE_AUTHOR("Google, Inc.");
++MODULE_DESCRIPTION("Driver for Android shared memory device");
++MODULE_LICENSE("GPL v2");
+diff --git a/mm/shmem.c b/mm/shmem.c
+index b2db4ed0fbc7..5f50dca34e9c 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -4233,6 +4233,7 @@ int shmem_zero_setup(struct vm_area_struct *vma)
+ 
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(shmem_zero_setup);
+ 
+ /**
+  * shmem_read_mapping_page_gfp - read into page cache, using specified page allocation flags.
+-- 
+2.30.2
+
