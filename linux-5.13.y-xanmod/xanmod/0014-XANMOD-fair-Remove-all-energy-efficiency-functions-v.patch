@@ -1,18 +1,19 @@
-From 83d88873e71bc2304cd6558a77eae1d23e1c5378 Mon Sep 17 00:00:00 2001
+From 1c6c20f66ea53087ed1bd459f762a4e2353430a9 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
-Date: Mon, 28 Jun 2021 12:20:10 +0000
-Subject: [PATCH 14/14] XANMOD: fair: Remove all energy efficiency functions
+Date: Wed, 14 Jul 2021 19:40:16 +0000
+Subject: [PATCH] XANMOD: fair: Remove all energy efficiency functions
+ [v5.13.2+]
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
- kernel/sched/fair.c | 258 --------------------------------------------
- 1 file changed, 258 deletions(-)
+ kernel/sched/fair.c | 263 --------------------------------------------
+ 1 file changed, 263 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 23663318fb81..5a397dd444eb 100644
+index e807b743353d..20f10945752c 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -6569,256 +6569,6 @@ static unsigned long cpu_util_without(int cpu, struct task_struct *p)
+@@ -6569,261 +6569,6 @@ static unsigned long cpu_util_without(int cpu, struct task_struct *p)
  	return min_t(unsigned long, util, capacity_orig_of(cpu));
  }
  
@@ -67,7 +68,10 @@ index 23663318fb81..5a397dd444eb 100644
 -	struct cpumask *pd_mask = perf_domain_span(pd);
 -	unsigned long cpu_cap = arch_scale_cpu_capacity(cpumask_first(pd_mask));
 -	unsigned long max_util = 0, sum_util = 0;
+-	unsigned long _cpu_cap = cpu_cap;
 -	int cpu;
+-
+-	_cpu_cap -= arch_scale_thermal_pressure(cpumask_first(pd_mask));
 -
 -	/*
 -	 * The capacity state of CPUs of the current rd can be driven by CPUs
@@ -104,8 +108,10 @@ index 23663318fb81..5a397dd444eb 100644
 -		 * is already enough to scale the EM reported power
 -		 * consumption at the (eventually clamped) cpu_capacity.
 -		 */
--		sum_util += effective_cpu_util(cpu, util_running, cpu_cap,
--					       ENERGY_UTIL, NULL);
+-		cpu_util = effective_cpu_util(cpu, util_running, cpu_cap,
+-					      ENERGY_UTIL, NULL);
+-
+-		sum_util += min(cpu_util, _cpu_cap);
 -
 -		/*
 -		 * Performance domain frequency: utilization clamping
@@ -116,7 +122,7 @@ index 23663318fb81..5a397dd444eb 100644
 -		 */
 -		cpu_util = effective_cpu_util(cpu, util_freq, cpu_cap,
 -					      FREQUENCY_UTIL, tsk);
--		max_util = max(max_util, cpu_util);
+-		max_util = max(max_util, min(cpu_util, _cpu_cap));
 -	}
 -
 -	return em_cpu_energy(pd->em_pd, max_util, sum_util);
@@ -269,7 +275,7 @@ index 23663318fb81..5a397dd444eb 100644
  /*
   * select_task_rq_fair: Select target runqueue for the waking task in domains
   * that have the relevant SD flag set. In practice, this is SD_BALANCE_WAKE,
-@@ -6844,14 +6594,6 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int wake_flags)
+@@ -6849,14 +6594,6 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int wake_flags)
  
  	if (wake_flags & WF_TTWU) {
  		record_wakee(p);

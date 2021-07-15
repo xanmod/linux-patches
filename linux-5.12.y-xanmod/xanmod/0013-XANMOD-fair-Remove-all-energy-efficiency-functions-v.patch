@@ -1,19 +1,19 @@
-From 6326d94ce84ec692bed6d5a2819eaab1cf6f1a48 Mon Sep 17 00:00:00 2001
-From: Hamad Al Marri <hamad.s.almarri@gmail.com>
-Date: Wed, 12 May 2021 11:51:06 +0000
+From 726ac5c45cfa5975e0d74a495d774a2e780d3271 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Wed, 14 Jul 2021 19:06:10 +0000
 Subject: [PATCH] XANMOD: fair: Remove all energy efficiency functions
- [v5.12.3+]
+ [v5.12.17+]
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
- kernel/sched/fair.c | 258 --------------------------------------------
- 1 file changed, 258 deletions(-)
+ kernel/sched/fair.c | 263 --------------------------------------------
+ 1 file changed, 263 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 0eeeeeb66f33..e34b571fbc7d 100644
+index 20ac5dff9a0c..f3151f4445fb 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -6507,256 +6507,6 @@ static unsigned long cpu_util_without(int cpu, struct task_struct *p)
+@@ -6513,261 +6513,6 @@ static unsigned long cpu_util_without(int cpu, struct task_struct *p)
  	return min_t(unsigned long, util, capacity_orig_of(cpu));
  }
  
@@ -68,7 +68,10 @@ index 0eeeeeb66f33..e34b571fbc7d 100644
 -	struct cpumask *pd_mask = perf_domain_span(pd);
 -	unsigned long cpu_cap = arch_scale_cpu_capacity(cpumask_first(pd_mask));
 -	unsigned long max_util = 0, sum_util = 0;
+-	unsigned long _cpu_cap = cpu_cap;
 -	int cpu;
+-
+-	_cpu_cap -= arch_scale_thermal_pressure(cpumask_first(pd_mask));
 -
 -	/*
 -	 * The capacity state of CPUs of the current rd can be driven by CPUs
@@ -105,8 +108,10 @@ index 0eeeeeb66f33..e34b571fbc7d 100644
 -		 * is already enough to scale the EM reported power
 -		 * consumption at the (eventually clamped) cpu_capacity.
 -		 */
--		sum_util += effective_cpu_util(cpu, util_running, cpu_cap,
--					       ENERGY_UTIL, NULL);
+-		cpu_util = effective_cpu_util(cpu, util_running, cpu_cap,
+-					      ENERGY_UTIL, NULL);
+-
+-		sum_util += min(cpu_util, _cpu_cap);
 -
 -		/*
 -		 * Performance domain frequency: utilization clamping
@@ -117,7 +122,7 @@ index 0eeeeeb66f33..e34b571fbc7d 100644
 -		 */
 -		cpu_util = effective_cpu_util(cpu, util_freq, cpu_cap,
 -					      FREQUENCY_UTIL, tsk);
--		max_util = max(max_util, cpu_util);
+-		max_util = max(max_util, min(cpu_util, _cpu_cap));
 -	}
 -
 -	return em_cpu_energy(pd->em_pd, max_util, sum_util);
@@ -270,7 +275,7 @@ index 0eeeeeb66f33..e34b571fbc7d 100644
  /*
   * select_task_rq_fair: Select target runqueue for the waking task in domains
   * that have the relevant SD flag set. In practice, this is SD_BALANCE_WAKE,
-@@ -6782,14 +6532,6 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int wake_flags)
+@@ -6793,14 +6538,6 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int wake_flags)
  
  	if (wake_flags & WF_TTWU) {
  		record_wakee(p);
@@ -286,5 +291,5 @@ index 0eeeeeb66f33..e34b571fbc7d 100644
  	}
  
 -- 
-2.30.2
+2.32.0
 
