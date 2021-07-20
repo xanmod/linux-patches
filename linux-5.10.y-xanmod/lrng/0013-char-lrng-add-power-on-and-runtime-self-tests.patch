@@ -1,6 +1,6 @@
-From f8506cdcb63f503872b6497e1e5a30fb8cfaf01c Mon Sep 17 00:00:00 2001
+From 92be34c7858c2dbcb1f63ddf91f9db4a61bdeab2 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Tue, 15 Sep 2020 22:37:51 +0200
+Date: Fri, 18 Jun 2021 08:26:24 +0200
 Subject: [PATCH 13/13] char/lrng: add power-on and runtime self-tests
 
 Parts of the LRNG are already covered by self-tests, including:
@@ -64,19 +64,45 @@ CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
 CC: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 CC: Neil Horman <nhorman@redhat.com>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- drivers/char/lrng/Kconfig         |  26 +++
+ drivers/char/lrng/Kconfig         |  43 +++-
  drivers/char/lrng/Makefile        |   1 +
- drivers/char/lrng/lrng_selftest.c | 344 ++++++++++++++++++++++++++++++
- 3 files changed, 371 insertions(+)
+ drivers/char/lrng/lrng_selftest.c | 351 ++++++++++++++++++++++++++++++
+ 3 files changed, 387 insertions(+), 8 deletions(-)
  create mode 100644 drivers/char/lrng/lrng_selftest.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 01df8fc0645d..8470101b6421 100644
+index 379e89e7fa53..0c654f4db5e1 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -324,4 +324,30 @@ config LRNG_TESTING
+@@ -165,15 +165,16 @@ config LRNG_COLLECTION_SIZE
+ 	default 8192 if LRNG_COLLECTION_SIZE_8192
+ 
+ config LRNG_HEALTH_TESTS
+-	bool "Enable noise source online health tests"
++	bool "Enable interrupt entropy source online health tests"
+ 	help
+-	  The online health tests validate the noise source at
+-	  runtime for fatal errors. These tests include SP800-90B
+-	  compliant tests which are invoked if the system is booted
+-	  with fips=1. In case of fatal errors during active
+-	  SP800-90B tests, the issue is logged and the noise
+-	  data is discarded. These tests are required for full
+-	  compliance with SP800-90B.
++	  The online health tests applied to the interrupt entropy
++	  source validate the noise source at runtime for fatal
++	  errors. These tests include SP800-90B compliant tests
++	  which are invoked if the system is booted with fips=1.
++	  In case of fatal errors during active SP800-90B tests,
++	  the issue is logged and the noise data is discarded.
++	  These tests are required for full compliance of the
++	  interrupt entropy source with SP800-90B.
+ 
+ 	  If unsure, say Y.
+ 
+@@ -485,4 +486,30 @@ config LRNG_TESTING
  
  endif #LRNG_TESTING_MENU
  
@@ -118,15 +144,15 @@ index 532501b38a00..a633638af991 100644
 +obj-$(CONFIG_LRNG_SELFTEST)	+= lrng_selftest.o
 diff --git a/drivers/char/lrng/lrng_selftest.c b/drivers/char/lrng/lrng_selftest.c
 new file mode 100644
-index 000000000000..4c7d124d24a4
+index 000000000000..cd2b64184f01
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_selftest.c
-@@ -0,0 +1,344 @@
+@@ -0,0 +1,351 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
 + * LRNG power-on and on-demand self-test
 + *
-+ * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2016 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +/*
@@ -183,32 +209,35 @@ index 000000000000..4c7d124d24a4
 +static inline void lrng_data_process_selftest_insert(u32 time)
 +{
 +	u32 ptr = lrng_data_selftest_ptr++ & LRNG_DATA_WORD_MASK;
++	unsigned int array = lrng_data_idx2array(ptr);
++	unsigned int slot = lrng_data_idx2slot(ptr);
 +
-+	lrng_data_selftest[lrng_data_idx2array(ptr)] |=
-+		lrng_data_slot_val(time & LRNG_DATA_SLOTSIZE_MASK,
-+				   lrng_data_idx2slot(ptr));
++	/* zeroization of slot to ensure the following OR adds the data */
++	lrng_data_selftest[array] &=
++		~(lrng_data_slot_val(0xffffffff & LRNG_DATA_SLOTSIZE_MASK,
++				     slot));
++	lrng_data_selftest[array] |=
++		lrng_data_slot_val(time & LRNG_DATA_SLOTSIZE_MASK, slot);
 +}
 +
-+static inline void lrng_data_process_selftest_u32(uint32_t data)
++static inline void lrng_data_process_selftest_u32(u32 data)
 +{
-+	uint32_t pre_ptr, ptr, mask;
++	u32 pre_ptr, ptr, mask;
++	unsigned int pre_array;
 +
 +	/* Increment pointer by number of slots taken for input value */
 +	lrng_data_selftest_ptr += LRNG_DATA_SLOTS_PER_UINT;
 +
 +	/* ptr to current unit */
 +	ptr = lrng_data_selftest_ptr;
-+	/* ptr to previous unit */
-+	pre_ptr = (lrng_data_selftest_ptr - LRNG_DATA_SLOTS_PER_UINT) &
-+		  LRNG_DATA_WORD_MASK;
-+	ptr &= LRNG_DATA_WORD_MASK;
 +
-+	/* mask to split data into the two parts for the two units */
-+	mask = ((1 << (pre_ptr & (LRNG_DATA_SLOTS_PER_UINT - 1)) *
-+		       LRNG_DATA_SLOTSIZE_BITS)) - 1;
++	lrng_pcpu_split_u32(&ptr, &pre_ptr, &mask);
 +
 +	/* MSB of data go into previous unit */
-+	lrng_data_selftest[lrng_data_idx2array(pre_ptr)] |= data & ~mask;
++	pre_array = lrng_data_idx2array(pre_ptr);
++	/* zeroization of slot to ensure the following OR adds the data */
++	lrng_data_selftest[pre_array] &= ~(0xffffffff &~ mask);
++	lrng_data_selftest[pre_array] |= data & ~mask;
 +
 +	/* LSB of data go into current unit */
 +	lrng_data_selftest[lrng_data_idx2array(ptr)] = data & mask;
@@ -226,6 +255,10 @@ index 000000000000..4c7d124d24a4
 +		(((LRNG_DATA_NUM_VALUES - 1) & LRNG_DATA_SLOTSIZE_MASK) << 24);
 +
 +	(void)idx_one_compare;
++
++	/* "poison" the array to verify the operation of the zeroization */
++	lrng_data_selftest[0] = 0xffffffff;
++	lrng_data_selftest[1] = 0xffffffff;
 +
 +	lrng_data_process_selftest_insert(0);
 +	/*
@@ -343,14 +376,14 @@ index 000000000000..4c7d124d24a4
 +	 * and pulling one ChaCha20 DRNG block.
 +	 */
 +	static const u8 expected_oneblock[CHACHA_KEY_SIZE * 2] = {
-+		0xf5, 0xb4, 0xb6, 0x5a, 0xec, 0xcd, 0x5a, 0x65,
-+		0x87, 0x56, 0xe3, 0x86, 0x51, 0x54, 0xfc, 0x90,
-+		0x56, 0xff, 0x5e, 0xae, 0x58, 0xf2, 0x01, 0x88,
-+		0xb1, 0x7e, 0xb8, 0x2e, 0x17, 0x9a, 0x27, 0xe6,
-+		0x86, 0xb3, 0xed, 0x33, 0xf7, 0xb9, 0x06, 0x05,
-+		0x8a, 0x2d, 0x1a, 0x93, 0xc9, 0x0b, 0x80, 0x04,
-+		0x03, 0xaa, 0x60, 0xaf, 0xd5, 0x36, 0x40, 0x11,
-+		0x67, 0x89, 0xb1, 0x66, 0xd5, 0x88, 0x62, 0x6d };
++		0xe3, 0xb0, 0x8a, 0xcc, 0x34, 0xc3, 0x17, 0x0e,
++		0xc3, 0xd8, 0xc3, 0x40, 0xe7, 0x73, 0xe9, 0x0d,
++		0xd1, 0x62, 0xa3, 0x5d, 0x7d, 0xf2, 0xf1, 0x4a,
++		0x24, 0x42, 0xb7, 0x1e, 0xb0, 0x05, 0x17, 0x07,
++		0xb9, 0x35, 0x10, 0x69, 0x8b, 0x46, 0xfb, 0x51,
++		0xe9, 0x91, 0x3f, 0x46, 0xf2, 0x4d, 0xea, 0xd0,
++		0x81, 0xc1, 0x1b, 0xa9, 0x5d, 0x52, 0x91, 0x5f,
++		0xcd, 0xdc, 0xc6, 0xd6, 0xc3, 0x7c, 0x50, 0x23 };
 +
 +	/*
 +	 * Expected result when ChaCha20 DRNG state is zero:
@@ -365,11 +398,11 @@ index 000000000000..4c7d124d24a4
 +	 * and pulling less than one ChaCha20 DRNG block.
 +	 */
 +	static const u8 expected_block_nonalinged[CHACHA_KEY_SIZE + 4] = {
-+		0x9d, 0xdd, 0x4f, 0xbe, 0x97, 0xcd, 0x8e, 0x15,
-+		0xb3, 0xc4, 0x1a, 0x17, 0x49, 0x29, 0x32, 0x7c,
-+		0xb3, 0x84, 0xa4, 0x9b, 0xa7, 0x14, 0xb3, 0xc1,
-+		0x5b, 0x3b, 0xfb, 0xa1, 0xe4, 0x23, 0x42, 0x8e,
-+		0x08, 0x1f, 0x53, 0xa2 };
++		0x9c, 0xfc, 0x5e, 0x31, 0x21, 0x62, 0x11, 0x85,
++		0xd3, 0x77, 0xd3, 0x69, 0x0f, 0xa8, 0x16, 0x55,
++		0xb4, 0x4c, 0xf6, 0x52, 0xf3, 0xa8, 0x37, 0x99,
++		0x38, 0x76, 0xa0, 0x66, 0xec, 0xbb, 0xce, 0xa9,
++		0x9c, 0x95, 0xa1, 0xfd };
 +
 +	BUILD_BUG_ON(sizeof(seed) % sizeof(u32));
 +

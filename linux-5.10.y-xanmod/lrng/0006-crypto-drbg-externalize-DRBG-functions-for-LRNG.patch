@@ -1,4 +1,4 @@
-From eaa716df57047711c5ee06a9a9ac817525ddba31 Mon Sep 17 00:00:00 2001
+From cbd75f72704151322a7d007195338dc1cbfa5b76 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
 Date: Tue, 15 Sep 2020 22:17:43 +0200
 Subject: [PATCH 06/13] crypto: drbg - externalize DRBG functions for LRNG
@@ -26,6 +26,7 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>

@@ -1,10 +1,7 @@
-From 3ffc529f880c3b0a9ea38154ca802b8db9eba2f5 Mon Sep 17 00:00:00 2001
+From a111e5ccb0704b5e38406fcbf36b47390eb61d47 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Tue, 15 Sep 2020 22:25:42 +0200
+Date: Fri, 18 Jun 2021 08:13:57 +0200
 Subject: [PATCH 10/13] char/lrng: add Jitter RNG fast noise source
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 The Jitter RNG fast noise source implemented as part of the kernel
 crypto API is queried for 256 bits of entropy at the time the seed
@@ -27,27 +24,28 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- drivers/char/lrng/Kconfig     | 12 +++++
+ drivers/char/lrng/Kconfig     | 27 +++++++++++
  drivers/char/lrng/Makefile    |  1 +
- drivers/char/lrng/lrng_jent.c | 88 +++++++++++++++++++++++++++++++++++
- 3 files changed, 101 insertions(+)
+ drivers/char/lrng/lrng_jent.c | 90 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 118 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_jent.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 246ccd3edcc2..f8c293ed8a92 100644
+index ffd2df43f2d4..e622b8532e2b 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -106,4 +106,16 @@ config LRNG_KCAPI
- 	  provided by the selected kernel crypto API RNG.
- endif # LRNG_DRNG_SWITCH
+@@ -182,6 +182,33 @@ config LRNG_IRQ_ENTROPY_RATE
+ 	  interrupt entropy source will still deliver data but without
+ 	  being credited with entropy.
  
++comment "Jitter RNG Entropy Source"
++
 +config LRNG_JENT
 +	bool "Enable Jitter RNG as LRNG Seed Source"
 +	depends on CRYPTO
@@ -60,7 +58,22 @@ index 246ccd3edcc2..f8c293ed8a92 100644
 +	  time or at runtime with the lrng_base.jitterrng configuration
 +	  variable.
 +
- endif # LRNG
++config LRNG_JENT_ENTROPY_RATE
++	int "Jitter RNG Entropy Source Entropy Rate"
++	range 0 256
++	default 16
++	help
++	  The option defines the amount of entropy the LRNG applies to 256
++	  bits of data obtained from the Jitter RNG entropy source. The
++	  LRNG enforces the limit that this value must be in the range
++	  between 0 and 256.
++
++	  In order to disable the Jitter RNG entropy source, the option
++	  has to be set to 0.
++
+ comment "CPU Entropy Source"
+ 
+ config LRNG_CPU_ENTROPY_RATE
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
 index 97d2b13d3227..6be88156010a 100644
 --- a/drivers/char/lrng/Makefile
@@ -72,15 +85,15 @@ index 97d2b13d3227..6be88156010a 100644
 +obj-$(CONFIG_LRNG_JENT)		+= lrng_jent.o
 diff --git a/drivers/char/lrng/lrng_jent.c b/drivers/char/lrng/lrng_jent.c
 new file mode 100644
-index 000000000000..225505271fcb
+index 000000000000..2599ab9352b6
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_jent.c
-@@ -0,0 +1,88 @@
+@@ -0,0 +1,90 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
-+ * LRNG Fast Noise Source: Jitter RNG
++ * LRNG Fast Entropy Source: Jitter RNG
 + *
-+ * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2016 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
@@ -97,9 +110,31 @@ index 000000000000..225505271fcb
 + * when it detects insufficient hardware, the chosen under estimation of
 + * entropy is considered to be acceptable to all reviewers.
 + */
-+static u32 jitterrng = LRNG_DRNG_SECURITY_STRENGTH_BITS>>4;
++static u32 jitterrng = CONFIG_LRNG_JENT_ENTROPY_RATE;
++#ifdef CONFIG_LRNG_RUNTIME_ES_CONFIG
 +module_param(jitterrng, uint, 0644);
 +MODULE_PARM_DESC(jitterrng, "Entropy in bits of 256 data bits from Jitter RNG noise source");
++#endif
++
++static bool lrng_jent_initialized = false;
++static struct rand_data *lrng_jent_state;
++
++static int __init lrng_jent_initialize(void)
++{
++	/* Initialize the Jitter RNG after the clocksources are initialized. */
++	lrng_jent_state = jent_lrng_entropy_collector();
++	if (!lrng_jent_state) {
++		jitterrng = 0;
++		pr_info("Jitter RNG unusable on current system\n");
++		return 0;
++	}
++	lrng_jent_initialized = true;
++	lrng_pool_add_entropy();
++	pr_debug("Jitter RNG working on current system\n");
++
++	return 0;
++}
++device_initcall(lrng_jent_initialize);
 +
 +/**
 + * lrng_get_jent() - Get Jitter RNG entropy
@@ -111,36 +146,21 @@ index 000000000000..225505271fcb
 + * * > 0 on success where value provides the added entropy in bits
 + * * 0 if no fast source was available
 + */
-+static struct rand_data *lrng_jent_state;
-+
-+u32 lrng_get_jent(u8 *outbuf, unsigned int outbuflen)
++u32 lrng_get_jent(u8 *outbuf, u32 requested_bits)
 +{
 +	int ret;
-+	u32 ent_bits = jitterrng;
++	u32 ent_bits = lrng_jent_entropylevel(requested_bits);
 +	unsigned long flags;
 +	static DEFINE_SPINLOCK(lrng_jent_lock);
-+	static int lrng_jent_initialized = 0;
 +
 +	spin_lock_irqsave(&lrng_jent_lock, flags);
 +
-+	if (!ent_bits || (lrng_jent_initialized == -1)) {
++	if (!ent_bits || !lrng_jent_initialized) {
 +		spin_unlock_irqrestore(&lrng_jent_lock, flags);
 +		return 0;
 +	}
 +
-+	if (!lrng_jent_initialized) {
-+		lrng_jent_state = jent_lrng_entropy_collector();
-+		if (!lrng_jent_state) {
-+			jitterrng = 0;
-+			lrng_jent_initialized = -1;
-+			spin_unlock_irqrestore(&lrng_jent_lock, flags);
-+			pr_info("Jitter RNG unusable on current system\n");
-+			return 0;
-+		}
-+		lrng_jent_initialized = 1;
-+		pr_debug("Jitter RNG working on current system\n");
-+	}
-+	ret = jent_read_entropy(lrng_jent_state, outbuf, outbuflen);
++	ret = jent_read_entropy(lrng_jent_state, outbuf, requested_bits >> 3);
 +	spin_unlock_irqrestore(&lrng_jent_lock, flags);
 +
 +	if (ret) {
@@ -148,21 +168,16 @@ index 000000000000..225505271fcb
 +		return 0;
 +	}
 +
-+	/* Obtain entropy statement */
-+	if (outbuflen != LRNG_DRNG_SECURITY_STRENGTH_BYTES)
-+		ent_bits = (ent_bits * outbuflen<<3) /
-+			   LRNG_DRNG_SECURITY_STRENGTH_BITS;
-+	/* Cap entropy to buffer size in bits */
-+	ent_bits = min_t(u32, ent_bits, outbuflen<<3);
 +	pr_debug("obtained %u bits of entropy from Jitter RNG noise source\n",
 +		 ent_bits);
 +
 +	return ent_bits;
 +}
 +
-+u32 lrng_jent_entropylevel(void)
++u32 lrng_jent_entropylevel(u32 requested_bits)
 +{
-+	return min_t(u32, jitterrng, LRNG_DRNG_SECURITY_STRENGTH_BITS);
++	return lrng_fast_noise_entropylevel((lrng_jent_initialized) ?
++					    jitterrng : 0, requested_bits);
 +}
 -- 
 2.32.0

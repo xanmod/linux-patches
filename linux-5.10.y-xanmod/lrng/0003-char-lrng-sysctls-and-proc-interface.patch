@@ -1,10 +1,7 @@
-From 6cfc1a2f0017545ce20611abceed8dde9e690bce Mon Sep 17 00:00:00 2001
+From 8f7c4199bfff76ff3c12ebaae707b5d41d410ff1 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Sat, 17 Oct 2020 21:50:19 +0200
+Date: Wed, 23 Jun 2021 18:44:26 +0200
 Subject: [PATCH 03/13] char/lrng: sysctls and /proc interface
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 The LRNG sysctl interface provides the same controls as the existing
 /dev/random implementation. These sysctls behave identically and are
@@ -30,7 +27,7 @@ high-resolution timer the interrupt noise source will deliver sufficient
 entropy
 
 - indicator whether the LRNG has been minimally seeded (i.e. is the
-secondary DRNG seeded with at least 128 bits of of entropy)
+secondary DRNG seeded with at least 128 bits of entropy)
 
 - indicator whether the LRNG has been fully seeded (i.e. is the
 secondary DRNG seeded with at least 256 bits of entropy)
@@ -54,9 +51,9 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
@@ -64,8 +61,8 @@ Signed-off-by: Stephan Mueller <smueller@chronox.de>
  drivers/char/lrng/Makefile          |   1 +
  drivers/char/lrng/lrng_interfaces.c |   2 -
  drivers/char/lrng/lrng_internal.h   |   4 +
- drivers/char/lrng/lrng_proc.c       | 182 ++++++++++++++++++++++++++++
- 4 files changed, 187 insertions(+), 2 deletions(-)
+ drivers/char/lrng/lrng_proc.c       | 185 ++++++++++++++++++++++++++++
+ 4 files changed, 190 insertions(+), 2 deletions(-)
  create mode 100644 drivers/char/lrng/lrng_proc.c
 
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
@@ -78,7 +75,7 @@ index 29724c65287d..ac97f0b11cb7 100644
  obj-$(CONFIG_NUMA)		+= lrng_numa.o
 +obj-$(CONFIG_SYSCTL)		+= lrng_proc.o
 diff --git a/drivers/char/lrng/lrng_interfaces.c b/drivers/char/lrng/lrng_interfaces.c
-index 19d01d3f7492..b55de97523ad 100644
+index 3a56bfdca01e..4b8c56849112 100644
 --- a/drivers/char/lrng/lrng_interfaces.c
 +++ b/drivers/char/lrng/lrng_interfaces.c
 @@ -38,8 +38,6 @@ static DECLARE_WAIT_QUEUE_HEAD(lrng_write_wait);
@@ -91,10 +88,10 @@ index 19d01d3f7492..b55de97523ad 100644
  
  /* Is the DRNG seed level too low? */
 diff --git a/drivers/char/lrng/lrng_internal.h b/drivers/char/lrng/lrng_internal.h
-index c44a7d26c99b..1c3a95e7b5ca 100644
+index 421a6f34a5a0..d47eefe12efb 100644
 --- a/drivers/char/lrng/lrng_internal.h
 +++ b/drivers/char/lrng/lrng_internal.h
-@@ -108,7 +108,11 @@ void lrng_cc20_init_state_boot(struct chacha20_state *state);
+@@ -113,7 +113,11 @@ void lrng_cc20_init_state(struct chacha20_state *state);
  
  /********************************** /proc *************************************/
  
@@ -108,15 +105,15 @@ index c44a7d26c99b..1c3a95e7b5ca 100644
  
 diff --git a/drivers/char/lrng/lrng_proc.c b/drivers/char/lrng/lrng_proc.c
 new file mode 100644
-index 000000000000..b2985a2ae0f7
+index 000000000000..30bc0a1a6632
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_proc.c
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,185 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
 + * LRNG proc and sysctl interfaces
 + *
-+ * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2016 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#include <linux/lrng.h>
@@ -185,7 +182,7 @@ index 000000000000..b2985a2ae0f7
 +	int entropy_count;
 +
 +	/* LRNG can at most retain entropy in per-CPU pools and aux pool */
-+	entropy_count = lrng_get_digestsize() * (num_online_cpus() + 1);
++	entropy_count = lrng_get_digestsize() + lrng_pcpu_avail_pool_size();
 +
 +	fake_table.data = &entropy_count;
 +	fake_table.maxlen = sizeof(entropy_count);
@@ -256,7 +253,7 @@ index 000000000000..b2985a2ae0f7
 +{
 +	struct lrng_drng *lrng_drng_init = lrng_drng_init_instance();
 +	unsigned long flags = 0;
-+	unsigned char buf[350];
++	unsigned char buf[390];
 +
 +	lrng_drng_lock(lrng_drng_init, &flags);
 +	snprintf(buf, sizeof(buf),
@@ -266,20 +263,23 @@ index 000000000000..b2985a2ae0f7
 +		 "LRNG security strength in bits: %d\n"
 +		 "per-CPU interrupt collection size: %u\n"
 +		 "number of DRNG instances: %u\n"
-+		 "SP800-90B compliance: %s\n"
++		 "Standards compliance: %s%s\n"
 +		 "High-resolution timer: %s\n"
 +		 "LRNG minimally seeded: %s\n"
-+		 "LRNG fully seeded: %s\n",
++		 "LRNG fully seeded: %s\n"
++		 "Continuous compression: %s\n",
 +		 lrng_drng_init->crypto_cb->lrng_drng_name(),
 +		 lrng_drng_init->crypto_cb->lrng_hash_name(),
 +		 lrng_drng_init->crypto_cb->lrng_hash_name(),
 +		 lrng_security_strength(),
 +		 LRNG_DATA_NUM_VALUES,
 +		 numa_drngs,
-+		 lrng_sp80090b_compliant() ? "true" : "false",
++		 lrng_sp80090b_compliant() ? "SP800-90B " : "",
++		 lrng_sp80090c_compliant() ? "SP800-90C " : "",
 +		 lrng_pool_highres_timer() ? "true" : "false",
 +		 lrng_state_min_seeded() ? "true" : "false",
-+		 lrng_state_fully_seeded() ? "true" : "false");
++		 lrng_state_fully_seeded() ? "true" : "false",
++		 lrng_pcpu_continuous_compression_state() ? "true" : "false");
 +	lrng_drng_unlock(lrng_drng_init, &flags);
 +
 +	seq_write(m, buf, strlen(buf));

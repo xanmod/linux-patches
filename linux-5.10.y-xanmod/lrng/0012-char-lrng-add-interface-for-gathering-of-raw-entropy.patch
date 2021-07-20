@@ -1,10 +1,7 @@
-From 7bb8e158e91426d061d698b9901905c52d38735b Mon Sep 17 00:00:00 2001
+From 7032662597237ef97b5dc7c6a1fb5305284b7059 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Sat, 17 Oct 2020 21:53:13 +0200
+Date: Fri, 18 Jun 2021 08:23:31 +0200
 Subject: [PATCH 12/13] char/lrng: add interface for gathering of raw entropy
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 The test interface allows a privileged process to capture the raw
 unconditioned noise that is collected by the LRNG for statistical
@@ -42,6 +39,8 @@ This includes sampling of the following raw data:
 
 * array logic batching the high-resolution time stamp
 
+* enabling the runtime configuration of entropy source entropy rates
+
 Also, a testing interface to support ACVT of the hash implementation
 is provided. The reason why only hash testing is supported (as
 opposed to also provide testing for the DRNG) is the fact that the
@@ -75,25 +74,25 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- drivers/char/lrng/Kconfig        | 150 +++++++
+ drivers/char/lrng/Kconfig        | 162 ++++++++
  drivers/char/lrng/Makefile       |   1 +
  drivers/char/lrng/lrng_testing.c | 689 +++++++++++++++++++++++++++++++
- 3 files changed, 840 insertions(+)
+ 3 files changed, 852 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_testing.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 68f2607c130f..01df8fc0645d 100644
+index 931959f75a83..379e89e7fa53 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -174,4 +174,154 @@ config LRNG_APT_CUTOFF
- 	default 325 if !LRNG_APT_BROKEN
- 	default 32 if LRNG_APT_BROKEN
+@@ -323,4 +323,166 @@ config LRNG_KCAPI
+ 	  provided by the selected kernel crypto API RNG.
+ endif # LRNG_DRNG_SWITCH
  
 +menuconfig LRNG_TESTING_MENU
 +	bool "LRNG testing interfaces"
@@ -239,6 +238,18 @@ index 68f2607c130f..01df8fc0645d 100644
 +	  The ACVT interface is available with the lrng_acvt_hash
 +	  debugfs file.
 +
++config LRNG_RUNTIME_ES_CONFIG
++	bool "Enable runtime configuration of entropy sources"
++	help
++	  When enabling this option, the LRNG provides the mechanism
++	  allowing to alter the entropy rate of each entropy source
++	  during boot time and runtime.
++
++	  The following interfaces are available:
++	  lrng_archrandom.archrandom for the CPU entropy source,
++	  lrng_jent.jitterrng for the Jitter RNG entropy source, and
++	  lrng_sw_noise.irq_entropy for the interrupt entropy source.
++
 +config LRNG_TESTING
 +	bool
 +	default y if (LRNG_RAW_HIRES_ENTROPY || LRNG_RAW_JIFFIES_ENTROPY ||LRNG_RAW_IRQ_ENTROPY || LRNG_RAW_IRQFLAGS_ENTROPY || LRNG_RAW_RETIP_ENTROPY || LRNG_RAW_REGS_ENTROPY || LRNG_RAW_ARRAY || LRNG_IRQ_PERF || LRNG_ACVT_HASH)
@@ -257,7 +268,7 @@ index 3c8637befb42..532501b38a00 100644
 +obj-$(CONFIG_LRNG_TESTING)	+= lrng_testing.o
 diff --git a/drivers/char/lrng/lrng_testing.c b/drivers/char/lrng/lrng_testing.c
 new file mode 100644
-index 000000000000..aafdff6304f1
+index 000000000000..99cc35abf45c
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_testing.c
 @@ -0,0 +1,689 @@
@@ -265,7 +276,7 @@ index 000000000000..aafdff6304f1
 +/*
 + * Linux Random Number Generator (LRNG) testing interfaces
 + *
-+ * Copyright (C) 2019 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2019 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt

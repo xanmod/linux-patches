@@ -1,10 +1,7 @@
-From e672c58c0fad4db500a5fcd593ab7ac585e84aae Mon Sep 17 00:00:00 2001
+From d98ff2bfe7b7304808e7e14f142ce1c646d37636 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Thu, 3 Dec 2020 18:41:41 +0100
+Date: Fri, 18 Jun 2021 08:06:39 +0200
 Subject: [PATCH 04/13] char/lrng: add switchable DRNG support
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 The DRNG switch support allows replacing the DRNG mechanism of the
 LRNG. The switching support rests on the interface definition of
@@ -59,26 +56,26 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- drivers/char/lrng/Kconfig       |   7 ++
+ drivers/char/lrng/Kconfig       |   7 +
  drivers/char/lrng/Makefile      |   1 +
- drivers/char/lrng/lrng_switch.c | 207 ++++++++++++++++++++++++++++++++
- 3 files changed, 215 insertions(+)
+ drivers/char/lrng/lrng_switch.c | 231 ++++++++++++++++++++++++++++++++
+ 3 files changed, 239 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_switch.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index e0e4be81bbff..72294404a582 100644
+index 1cb2f55666ac..c10a0c3f2015 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -69,4 +69,11 @@ config LRNG_COLLECTION_SIZE
- 	default 512 if LRNG_COLLECTION_SIZE_512
- 	default 1024 if LRNG_COLLECTION_SIZE_1024
+@@ -202,4 +202,11 @@ config LRNG_CPU_ENTROPY_RATE
+ 
+ endmenu # "Entropy Source Configuration"
  
 +menuconfig LRNG_DRNG_SWITCH
 +	bool "Support DRNG runtime switching"
@@ -99,15 +96,15 @@ index ac97f0b11cb7..0eb4a6849c88 100644
 +obj-$(CONFIG_LRNG_DRNG_SWITCH)	+= lrng_switch.o
 diff --git a/drivers/char/lrng/lrng_switch.c b/drivers/char/lrng/lrng_switch.c
 new file mode 100644
-index 000000000000..2583cca08068
+index 000000000000..23390674012b
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_switch.c
-@@ -0,0 +1,207 @@
+@@ -0,0 +1,231 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
 + * LRNG DRNG switching support
 + *
-+ * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2016 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
@@ -170,6 +167,7 @@ index 000000000000..2583cca08068
 +	} else {
 +		/* seed new DRNG with data */
 +		ret = cb->lrng_drng_seed_helper(new_drng, seed, ret);
++		memzero_explicit(seed, sizeof(seed));
 +		if (ret < 0) {
 +			reset_drng = true;
 +			pr_warn("seeding of new DRNG failed for NUMA node %d (%d)\n",
@@ -195,9 +193,20 @@ index 000000000000..2583cca08068
 +		__acquire(&drng_store->spin_lock);
 +	}
 +
++	/* Trigger the switch of the aux entropy pool for current node. */
++	if (drng_store == lrng_drng_init_instance()) {
++		ret = lrng_aux_switch_hash(cb, new_hash, drng_store->crypto_cb);
++		if (ret)
++			goto err;
++	}
++
 +	/* Trigger the switch of the per-CPU entropy pools for current node. */
 +	ret = lrng_pcpu_switch_hash(node, cb, new_hash, drng_store->crypto_cb);
-+	if (!ret) {
++	if (ret) {
++		/* Switch the crypto operation back to be consistent */
++		WARN_ON(lrng_aux_switch_hash(drng_store->crypto_cb,
++					     drng_store->hash, cb));
++	} else {
 +		if (reset_drng)
 +			lrng_drng_reset(drng_store);
 +
@@ -211,11 +220,22 @@ index 000000000000..2583cca08068
 +		pr_info("Entropy pool read-hash allocated for DRNG for NUMA node %d\n",
 +			node);
 +
-+		lrng_set_digestsize(cb->lrng_hash_digestsize(new_hash));
++		if (lrng_state_min_seeded())
++			lrng_set_entropy_thresh(lrng_get_seed_entropy_osr());
 +
 +		/* Reseed if previous LRNG security strength was insufficient */
 +		if (current_security_strength < lrng_security_strength())
 +			drng_store->force_reseed = true;
++
++		/* Force oversampling seeding as we initialize DRNG */
++		if (IS_ENABLED(CONFIG_LRNG_OVERSAMPLE_ENTROPY_SOURCES)) {
++			drng_store->force_reseed = true;
++			drng_store->fully_seeded = false;
++
++			/* Block output interfaces until again fully seeded */
++			if (drng_store == lrng_drng_init_instance())
++				lrng_unset_operational();
++		}
 +
 +		/* ChaCha20 serves as atomic instance left untouched. */
 +		if (old_drng != &chacha20) {
@@ -226,6 +246,7 @@ index 000000000000..2583cca08068
 +		pr_info("DRNG of NUMA node %d switched\n", node);
 +	}
 +
++err:
 +	if (sl)
 +		spin_unlock_irqrestore(&drng_store->spin_lock, flags);
 +	else

@@ -1,6 +1,6 @@
-From a3623bad7c55a0184b3c4d0c10dbe9f30f1a6199 Mon Sep 17 00:00:00 2001
+From ed54a26225c035a5742db49599ed51d597b6157b Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Tue, 15 Sep 2020 22:10:02 +0200
+Date: Fri, 18 Jun 2021 08:08:20 +0200
 Subject: [PATCH 05/13] char/lrng: add common generic hash support
 
 The LRNG switchable DRNG support also allows the replacement of the hash
@@ -31,25 +31,25 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 CC: "Peter, Matthias" <matthias.peter@bsi.bund.de>
-CC: Roman Drahtmueller <draht@schaltsekun.de>
 CC: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 CC: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- drivers/char/lrng/Kconfig           |  7 +++
- drivers/char/lrng/Makefile          |  1 +
- drivers/char/lrng/lrng_kcapi_hash.c | 97 +++++++++++++++++++++++++++++
- drivers/char/lrng/lrng_kcapi_hash.h | 19 ++++++
- 4 files changed, 124 insertions(+)
+ drivers/char/lrng/Kconfig           |   8 +++
+ drivers/char/lrng/Makefile          |   1 +
+ drivers/char/lrng/lrng_kcapi_hash.c | 103 ++++++++++++++++++++++++++++
+ drivers/char/lrng/lrng_kcapi_hash.h |  20 ++++++
+ 4 files changed, 132 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_kcapi_hash.c
  create mode 100644 drivers/char/lrng/lrng_kcapi_hash.h
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 72294404a582..ec325da97744 100644
+index c10a0c3f2015..ab17c45a356b 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -76,4 +76,11 @@ menuconfig LRNG_DRNG_SWITCH
+@@ -209,4 +209,12 @@ menuconfig LRNG_DRNG_SWITCH
  	  accessible via the external interfaces. With this configuration
  	  option other DRNGs can be selected and loaded at runtime.
  
@@ -57,6 +57,7 @@ index 72294404a582..ec325da97744 100644
 +
 +config LRNG_KCAPI_HASH
 +	bool
++	select CRYPTO_HASH
 +
 +endif # LRNG_DRNG_SWITCH
 +
@@ -72,15 +73,15 @@ index 0eb4a6849c88..40f8826edeeb 100644
 +obj-$(CONFIG_LRNG_KCAPI_HASH)	+= lrng_kcapi_hash.o
 diff --git a/drivers/char/lrng/lrng_kcapi_hash.c b/drivers/char/lrng/lrng_kcapi_hash.c
 new file mode 100644
-index 000000000000..c5ddc71f5f8c
+index 000000000000..9647d980e468
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_kcapi_hash.c
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,103 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
 + * Backend for providing the hash primitive using the kernel crypto API.
 + *
-+ * Copyright (C) 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
@@ -173,15 +174,21 @@ index 000000000000..c5ddc71f5f8c
 +	return crypto_shash_final(shash, digest);
 +}
 +EXPORT_SYMBOL(lrng_kcapi_hash_final);
++
++void lrng_kcapi_hash_zero(struct shash_desc *shash)
++{
++	shash_desc_zero(shash);
++}
++EXPORT_SYMBOL(lrng_kcapi_hash_zero);
 diff --git a/drivers/char/lrng/lrng_kcapi_hash.h b/drivers/char/lrng/lrng_kcapi_hash.h
 new file mode 100644
-index 000000000000..5bca7aba197f
+index 000000000000..2f94558d2dd6
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_kcapi_hash.h
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,20 @@
 +/* SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause */
 +/*
-+ * Copyright (C) 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2020 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#ifndef _LRNG_KCAPI_HASH_H
@@ -196,6 +203,7 @@ index 000000000000..5bca7aba197f
 +int lrng_kcapi_hash_update(struct shash_desc *shash, const u8 *inbuf,
 +			   u32 inbuflen);
 +int lrng_kcapi_hash_final(struct shash_desc *shash, u8 *digest);
++void lrng_kcapi_hash_zero(struct shash_desc *shash);
 +
 +#endif /* _LRNG_KCAPI_HASH_H */
 -- 

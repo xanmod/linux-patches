@@ -1,10 +1,7 @@
-From 1f6797a5e2c4a67af8a24221593f733d7b1346aa Mon Sep 17 00:00:00 2001
+From 0e6b8b1f0c9e72aa5711a85c20ea125674444d20 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Thu, 3 Dec 2020 18:50:41 +0100
+Date: Fri, 18 Jun 2021 08:10:53 +0200
 Subject: [PATCH 08/13] char/lrng: add kernel crypto API PRNG extension
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 Add runtime-pluggable support for all PRNGs that are accessible via
 the kernel crypto API, including hardware PRNGs. The PRNG is selected
@@ -36,24 +33,24 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
  drivers/char/lrng/Kconfig      |  13 ++
  drivers/char/lrng/Makefile     |   1 +
- drivers/char/lrng/lrng_kcapi.c | 225 +++++++++++++++++++++++++++++++++
- 3 files changed, 239 insertions(+)
+ drivers/char/lrng/lrng_kcapi.c | 227 +++++++++++++++++++++++++++++++++
+ 3 files changed, 241 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_kcapi.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index ab5a629b482d..246ccd3edcc2 100644
+index aa611363b97e..ffd2df43f2d4 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -91,6 +91,19 @@ config LRNG_DRBG
+@@ -225,6 +225,19 @@ config LRNG_DRBG
  	  Enable the SP800-90A DRBG support for the LRNG. Once the
  	  module is loaded, output from /dev/random, /dev/urandom,
  	  getrandom(2), or get_random_bytes_full is provided by a DRBG.
@@ -84,16 +81,16 @@ index 6ebd252db12f..97d2b13d3227 100644
 +obj-$(CONFIG_LRNG_KCAPI)	+= lrng_kcapi.o
 diff --git a/drivers/char/lrng/lrng_kcapi.c b/drivers/char/lrng/lrng_kcapi.c
 new file mode 100644
-index 000000000000..2389e9412ed2
+index 000000000000..b06449cb2365
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_kcapi.c
-@@ -0,0 +1,225 @@
+@@ -0,0 +1,227 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
 + * Backend for the LRNG providing the cryptographic primitives using the
 + * kernel crypto API.
 + *
-+ * Copyright (C) 2018 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2018 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
@@ -149,6 +146,7 @@ index 000000000000..2389e9412ed2
 +	ret = lrng_kcapi_hash_init(shash, hash) ?:
 +	      lrng_kcapi_hash_update(shash, inbuf, inbuflen) ?:
 +	      lrng_kcapi_hash_final(shash, digest);
++	lrng_kcapi_hash_zero(shash);
 +	if (ret)
 +		return ret;
 +
@@ -297,6 +295,7 @@ index 000000000000..2389e9412ed2
 +	.lrng_hash_init			= lrng_kcapi_hash_init,
 +	.lrng_hash_update		= lrng_kcapi_hash_update,
 +	.lrng_hash_final		= lrng_kcapi_hash_final,
++	.lrng_hash_desc_zero		= lrng_kcapi_hash_zero,
 +};
 +
 +static int __init lrng_kcapi_init(void)

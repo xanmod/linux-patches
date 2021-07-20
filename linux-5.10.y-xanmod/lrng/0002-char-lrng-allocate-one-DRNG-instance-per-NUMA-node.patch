@@ -1,10 +1,7 @@
-From 44d4abd435b544d4500e7a3ebeea3720e27acf76 Mon Sep 17 00:00:00 2001
+From 374a7dee9bc69ff8449fa998aa333ec31b1a7c0e Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Thu, 3 Dec 2020 18:38:34 +0100
+Date: Fri, 18 Jun 2021 08:03:15 +0200
 Subject: [PATCH 02/13] char/lrng: allocate one DRNG instance per NUMA node
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 In order to improve NUMA-locality when serving getrandom(2) requests,
 allocate one DRNG instance per node.
@@ -40,17 +37,17 @@ CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
 CC: Eric Biggers <ebiggers@kernel.org>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
  drivers/char/lrng/Makefile        |   2 +
  drivers/char/lrng/lrng_internal.h |   5 ++
- drivers/char/lrng/lrng_numa.c     | 120 ++++++++++++++++++++++++++++++
- 3 files changed, 127 insertions(+)
+ drivers/char/lrng/lrng_numa.c     | 122 ++++++++++++++++++++++++++++++
+ 3 files changed, 129 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_numa.c
 
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
@@ -64,10 +61,10 @@ index e72e01c15bb9..29724c65287d 100644
 +
 +obj-$(CONFIG_NUMA)		+= lrng_numa.o
 diff --git a/drivers/char/lrng/lrng_internal.h b/drivers/char/lrng/lrng_internal.h
-index 4ce9a27aa06b..c44a7d26c99b 100644
+index f44ddf2a43d4..421a6f34a5a0 100644
 --- a/drivers/char/lrng/lrng_internal.h
 +++ b/drivers/char/lrng/lrng_internal.h
-@@ -214,8 +214,13 @@ int lrng_drng_get_sleep(u8 *outbuf, u32 outbuflen);
+@@ -253,8 +253,13 @@ int lrng_drng_get_sleep(u8 *outbuf, u32 outbuflen);
  void lrng_drng_force_reseed(void);
  void lrng_drng_seed_work(struct work_struct *dummy);
  
@@ -79,19 +76,19 @@ index 4ce9a27aa06b..c44a7d26c99b 100644
  static inline void lrng_drngs_numa_alloc(void) { return; }
 +#endif /* CONFIG_NUMA */
  
- /************************** Entropy pool management ***************************/
+ /************************* Entropy sources management *************************/
  
 diff --git a/drivers/char/lrng/lrng_numa.c b/drivers/char/lrng/lrng_numa.c
 new file mode 100644
-index 000000000000..a0af4a718fb1
+index 000000000000..fbfb40a5fb8d
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_numa.c
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,122 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
 + * LRNG NUMA support
 + *
-+ * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2016 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
@@ -177,8 +174,10 @@ index 000000000000..a0af4a718fb1
 +	}
 +
 +	/* counterpart to smp_load_acquire in lrng_drng_instances */
-+	if (!cmpxchg_release(&lrng_drng, NULL, drngs))
++	if (!cmpxchg_release(&lrng_drng, NULL, drngs)) {
++		lrng_pool_all_numa_nodes_seeded(false);
 +		goto unlock;
++	}
 +
 +err:
 +	for_each_online_node(node) {

@@ -1,10 +1,7 @@
-From d88d16efca0549f0e57ccff85ddba8d9f8487a7c Mon Sep 17 00:00:00 2001
+From 5d9a888f3330c49a48d7ce5d53e10b50be5f94af Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Tue, 15 Sep 2020 22:46:15 +0200
+Date: Fri, 18 Jun 2021 08:09:59 +0200
 Subject: [PATCH 07/13] char/lrng: add SP800-90A DRBG extension
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 Using the LRNG switchable DRNG support, the SP800-90A DRBG extension is
 implemented.
@@ -40,25 +37,25 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
  drivers/char/lrng/Kconfig     |  10 ++
  drivers/char/lrng/Makefile    |   1 +
- drivers/char/lrng/lrng_drbg.c | 197 ++++++++++++++++++++++++++++++++++
- 3 files changed, 208 insertions(+)
+ drivers/char/lrng/lrng_drbg.c | 198 ++++++++++++++++++++++++++++++++++
+ 3 files changed, 209 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_drbg.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index ec325da97744..ab5a629b482d 100644
+index ab17c45a356b..aa611363b97e 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -81,6 +81,16 @@ if LRNG_DRNG_SWITCH
- config LRNG_KCAPI_HASH
+@@ -215,6 +215,16 @@ config LRNG_KCAPI_HASH
  	bool
+ 	select CRYPTO_HASH
  
 +config LRNG_DRBG
 +	tristate "SP800-90A support for the LRNG"
@@ -84,16 +81,16 @@ index 40f8826edeeb..6ebd252db12f 100644
 +obj-$(CONFIG_LRNG_DRBG)		+= lrng_drbg.o
 diff --git a/drivers/char/lrng/lrng_drbg.c b/drivers/char/lrng/lrng_drbg.c
 new file mode 100644
-index 000000000000..c428d41af64d
+index 000000000000..6ca6b05eccf4
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_drbg.c
-@@ -0,0 +1,197 @@
+@@ -0,0 +1,198 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
 + * Backend for the LRNG providing the cryptographic primitives using the
 + * kernel crypto API and its DRBG.
 + *
-+ * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2016 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
@@ -262,6 +259,7 @@ index 000000000000..c428d41af64d
 +	.lrng_hash_init			= lrng_kcapi_hash_init,
 +	.lrng_hash_update		= lrng_kcapi_hash_update,
 +	.lrng_hash_final		= lrng_kcapi_hash_final,
++	.lrng_hash_desc_zero		= lrng_kcapi_hash_zero,
 +};
 +
 +static int __init lrng_drbg_init(void)

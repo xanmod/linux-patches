@@ -1,6 +1,6 @@
-From ff45cc82ab06034f73e22adc31e38267baa2e580 Mon Sep 17 00:00:00 2001
+From 24bc5b9b17d4e8c886b801a7ebaa01814ee36895 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Tue, 15 Sep 2020 22:33:20 +0200
+Date: Fri, 18 Jun 2021 08:17:40 +0200
 Subject: [PATCH 11/13] char/lrng: add SP800-90B compliant health tests
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -124,25 +124,25 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
  drivers/char/lrng/Kconfig       |  56 +++++
  drivers/char/lrng/Makefile      |   1 +
- drivers/char/lrng/lrng_health.c | 407 ++++++++++++++++++++++++++++++++
- 3 files changed, 464 insertions(+)
+ drivers/char/lrng/lrng_health.c | 410 ++++++++++++++++++++++++++++++++
+ 3 files changed, 467 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_health.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index f8c293ed8a92..68f2607c130f 100644
+index e622b8532e2b..931959f75a83 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -118,4 +118,60 @@ config LRNG_JENT
- 	  time or at runtime with the lrng_base.jitterrng configuration
- 	  variable.
+@@ -164,6 +164,62 @@ config LRNG_COLLECTION_SIZE
+ 	default 4096 if LRNG_COLLECTION_SIZE_4096
+ 	default 8192 if LRNG_COLLECTION_SIZE_8192
  
 +config LRNG_HEALTH_TESTS
 +	bool "Enable noise source online health tests"
@@ -200,7 +200,9 @@ index f8c293ed8a92..68f2607c130f 100644
 +	default 325 if !LRNG_APT_BROKEN
 +	default 32 if LRNG_APT_BROKEN
 +
- endif # LRNG
+ config LRNG_IRQ_ENTROPY_RATE
+ 	int "Interrupt Entropy Source Entropy Rate"
+ 	range 256 4294967295
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
 index 6be88156010a..3c8637befb42 100644
 --- a/drivers/char/lrng/Makefile
@@ -212,15 +214,15 @@ index 6be88156010a..3c8637befb42 100644
 +obj-$(CONFIG_LRNG_HEALTH_TESTS)	+= lrng_health.o
 diff --git a/drivers/char/lrng/lrng_health.c b/drivers/char/lrng/lrng_health.c
 new file mode 100644
-index 000000000000..7817aa6f3357
+index 000000000000..a56a0c4261ab
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_health.c
-@@ -0,0 +1,407 @@
+@@ -0,0 +1,410 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
 + * Linux Random Number Generator (LRNG) Health Testing
 + *
-+ * Copyright (C) 2019 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2019 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
@@ -324,9 +326,12 @@ index 000000000000..7817aa6f3357
 +{
 +	if (!health->sp80090b_startup_done &&
 +	    atomic_dec_and_test(&health->sp80090b_startup_blocks)) {
++		struct entropy_buf eb;
++
 +		health->sp80090b_startup_done = true;
 +		pr_info("SP800-90B startup health tests completed\n");
-+		lrng_init_ops(0);
++		memset(&eb, 0, sizeof(eb));
++		lrng_init_ops(&eb);
 +
 +		/*
 +		 * Force a reseed of DRNGs to ensure they are seeded with
