@@ -1,6 +1,6 @@
-From 3f5701e45f6a4263ab6f6d322a2a2c6fcebe7e15 Mon Sep 17 00:00:00 2001
+From c2644c0c63a0415f205941b99da5147029b3900a Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Wed, 5 May 2021 23:25:57 +0200
+Date: Wed, 23 Jun 2021 18:44:26 +0200
 Subject: [PATCH 03/13] char/lrng: sysctls and /proc interface
 
 The LRNG sysctl interface provides the same controls as the existing
@@ -27,7 +27,7 @@ high-resolution timer the interrupt noise source will deliver sufficient
 entropy
 
 - indicator whether the LRNG has been minimally seeded (i.e. is the
-secondary DRNG seeded with at least 128 bits of of entropy)
+secondary DRNG seeded with at least 128 bits of entropy)
 
 - indicator whether the LRNG has been fully seeded (i.e. is the
 secondary DRNG seeded with at least 256 bits of entropy)
@@ -51,6 +51,7 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
@@ -60,8 +61,8 @@ Signed-off-by: Stephan Mueller <smueller@chronox.de>
  drivers/char/lrng/Makefile          |   1 +
  drivers/char/lrng/lrng_interfaces.c |   2 -
  drivers/char/lrng/lrng_internal.h   |   4 +
- drivers/char/lrng/lrng_proc.c       | 186 ++++++++++++++++++++++++++++
- 4 files changed, 191 insertions(+), 2 deletions(-)
+ drivers/char/lrng/lrng_proc.c       | 185 ++++++++++++++++++++++++++++
+ 4 files changed, 190 insertions(+), 2 deletions(-)
  create mode 100644 drivers/char/lrng/lrng_proc.c
 
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
@@ -74,7 +75,7 @@ index 29724c65287d..ac97f0b11cb7 100644
  obj-$(CONFIG_NUMA)		+= lrng_numa.o
 +obj-$(CONFIG_SYSCTL)		+= lrng_proc.o
 diff --git a/drivers/char/lrng/lrng_interfaces.c b/drivers/char/lrng/lrng_interfaces.c
-index efcadcfa79f2..8121ba495844 100644
+index 3a56bfdca01e..4b8c56849112 100644
 --- a/drivers/char/lrng/lrng_interfaces.c
 +++ b/drivers/char/lrng/lrng_interfaces.c
 @@ -38,8 +38,6 @@ static DECLARE_WAIT_QUEUE_HEAD(lrng_write_wait);
@@ -87,10 +88,10 @@ index efcadcfa79f2..8121ba495844 100644
  
  /* Is the DRNG seed level too low? */
 diff --git a/drivers/char/lrng/lrng_internal.h b/drivers/char/lrng/lrng_internal.h
-index 49a7c11d4f10..7a2c44423729 100644
+index e1d83c888894..a4ed142d11eb 100644
 --- a/drivers/char/lrng/lrng_internal.h
 +++ b/drivers/char/lrng/lrng_internal.h
-@@ -108,7 +108,11 @@ void lrng_cc20_init_state(struct chacha20_state *state);
+@@ -114,7 +114,11 @@ void lrng_cc20_init_state(struct chacha20_state *state);
  
  /********************************** /proc *************************************/
  
@@ -104,10 +105,10 @@ index 49a7c11d4f10..7a2c44423729 100644
  
 diff --git a/drivers/char/lrng/lrng_proc.c b/drivers/char/lrng/lrng_proc.c
 new file mode 100644
-index 000000000000..62e7b7884f18
+index 000000000000..30bc0a1a6632
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_proc.c
-@@ -0,0 +1,186 @@
+@@ -0,0 +1,185 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
 + * LRNG proc and sysctl interfaces
@@ -262,8 +263,7 @@ index 000000000000..62e7b7884f18
 +		 "LRNG security strength in bits: %d\n"
 +		 "per-CPU interrupt collection size: %u\n"
 +		 "number of DRNG instances: %u\n"
-+		 "SP800-90B compliance: %s\n"
-+		 "SP800-90C compliance: %s\n"
++		 "Standards compliance: %s%s\n"
 +		 "High-resolution timer: %s\n"
 +		 "LRNG minimally seeded: %s\n"
 +		 "LRNG fully seeded: %s\n"
@@ -274,8 +274,8 @@ index 000000000000..62e7b7884f18
 +		 lrng_security_strength(),
 +		 LRNG_DATA_NUM_VALUES,
 +		 numa_drngs,
-+		 lrng_sp80090b_compliant() ? "true" : "false",
-+		 lrng_sp80090c_compliant() ? "true" : "false",
++		 lrng_sp80090b_compliant() ? "SP800-90B " : "",
++		 lrng_sp80090c_compliant() ? "SP800-90C " : "",
 +		 lrng_pool_highres_timer() ? "true" : "false",
 +		 lrng_state_min_seeded() ? "true" : "false",
 +		 lrng_state_fully_seeded() ? "true" : "false",

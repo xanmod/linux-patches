@@ -1,6 +1,6 @@
-From d78819d39403e8cbaf1dc35ba71442820db399d7 Mon Sep 17 00:00:00 2001
+From 205951c48f4c85c593f9c581f4501715251ba65a Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Wed, 5 May 2021 23:30:40 +0200
+Date: Fri, 18 Jun 2021 08:10:53 +0200
 Subject: [PATCH 08/13] char/lrng: add kernel crypto API PRNG extension
 
 Add runtime-pluggable support for all PRNGs that are accessible via
@@ -33,6 +33,7 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
@@ -46,10 +47,10 @@ Signed-off-by: Stephan Mueller <smueller@chronox.de>
  create mode 100644 drivers/char/lrng/lrng_kcapi.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index e5fe8a764059..e66e8cd1d86f 100644
+index aa611363b97e..ffd2df43f2d4 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -181,6 +181,19 @@ config LRNG_DRBG
+@@ -225,6 +225,19 @@ config LRNG_DRBG
  	  Enable the SP800-90A DRBG support for the LRNG. Once the
  	  module is loaded, output from /dev/random, /dev/urandom,
  	  getrandom(2), or get_random_bytes_full is provided by a DRBG.

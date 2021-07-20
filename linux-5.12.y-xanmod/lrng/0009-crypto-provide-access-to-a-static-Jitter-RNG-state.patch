@@ -1,4 +1,4 @@
-From 4168f1519aaac519ffb1f7090c976ea40def31bd Mon Sep 17 00:00:00 2001
+From 0b7ca1b0f2293615745a758572de890db29115ec Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
 Date: Wed, 16 Sep 2020 09:50:27 +0200
 Subject: [PATCH 09/13] crypto: provide access to a static Jitter RNG state
@@ -30,6 +30,7 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>

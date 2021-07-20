@@ -1,6 +1,6 @@
-From 8f550b4e2ca3e9282ac365411e6faa51aa6f671e Mon Sep 17 00:00:00 2001
+From fd00b1e6414550df71a3bf1b5ca786b20fbd598d Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Wed, 5 May 2021 23:32:02 +0200
+Date: Fri, 18 Jun 2021 08:17:40 +0200
 Subject: [PATCH 11/13] char/lrng: add SP800-90B compliant health tests
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -124,6 +124,7 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
@@ -136,12 +137,12 @@ Signed-off-by: Stephan Mueller <smueller@chronox.de>
  create mode 100644 drivers/char/lrng/lrng_health.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 7e302b204f7c..7c6ad714572b 100644
+index e622b8532e2b..931959f75a83 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -208,4 +208,60 @@ config LRNG_JENT
- 	  time or at runtime with the lrng_base.jitterrng configuration
- 	  variable.
+@@ -164,6 +164,62 @@ config LRNG_COLLECTION_SIZE
+ 	default 4096 if LRNG_COLLECTION_SIZE_4096
+ 	default 8192 if LRNG_COLLECTION_SIZE_8192
  
 +config LRNG_HEALTH_TESTS
 +	bool "Enable noise source online health tests"
@@ -199,7 +200,9 @@ index 7e302b204f7c..7c6ad714572b 100644
 +	default 325 if !LRNG_APT_BROKEN
 +	default 32 if LRNG_APT_BROKEN
 +
- endif # LRNG
+ config LRNG_IRQ_ENTROPY_RATE
+ 	int "Interrupt Entropy Source Entropy Rate"
+ 	range 256 4294967295
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
 index 6be88156010a..3c8637befb42 100644
 --- a/drivers/char/lrng/Makefile

@@ -1,6 +1,6 @@
-From ff1a752dc2b2b3c921591a6bbf0ce1ebae9b58de Mon Sep 17 00:00:00 2001
+From c40c6f2b7f651d5671f753840e0bec65984478ca Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Mon, 24 May 2021 19:53:24 +0200
+Date: Fri, 18 Jun 2021 08:08:20 +0200
 Subject: [PATCH 05/13] char/lrng: add common generic hash support
 
 The LRNG switchable DRNG support also allows the replacement of the hash
@@ -31,6 +31,7 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 CC: "Peter, Matthias" <matthias.peter@bsi.bund.de>
 CC: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 CC: Neil Horman <nhorman@redhat.com>
@@ -45,10 +46,10 @@ Signed-off-by: Stephan Mueller <smueller@chronox.de>
  create mode 100644 drivers/char/lrng/lrng_kcapi_hash.h
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 4e02542d7fcc..14ff26e42daa 100644
+index c10a0c3f2015..ab17c45a356b 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -165,4 +165,12 @@ menuconfig LRNG_DRNG_SWITCH
+@@ -209,4 +209,12 @@ menuconfig LRNG_DRNG_SWITCH
  	  accessible via the external interfaces. With this configuration
  	  option other DRNGs can be selected and loaded at runtime.
  

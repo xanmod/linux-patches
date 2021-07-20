@@ -1,6 +1,6 @@
-From 6c4f8a616afe37a07c3b7b283cb88890b8c89040 Mon Sep 17 00:00:00 2001
+From 124b6eda141950812ff264003cd5d506cbaa72af Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Mon, 24 May 2021 19:57:36 +0200
+Date: Fri, 18 Jun 2021 08:13:57 +0200
 Subject: [PATCH 10/13] char/lrng: add Jitter RNG fast noise source
 
 The Jitter RNG fast noise source implemented as part of the kernel
@@ -24,25 +24,28 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- drivers/char/lrng/Kconfig     | 12 +++++
+ drivers/char/lrng/Kconfig     | 27 +++++++++++
  drivers/char/lrng/Makefile    |  1 +
- drivers/char/lrng/lrng_jent.c | 91 +++++++++++++++++++++++++++++++++++
- 3 files changed, 104 insertions(+)
+ drivers/char/lrng/lrng_jent.c | 90 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 118 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_jent.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index e66e8cd1d86f..7e302b204f7c 100644
+index ffd2df43f2d4..e622b8532e2b 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -196,4 +196,16 @@ config LRNG_KCAPI
- 	  provided by the selected kernel crypto API RNG.
- endif # LRNG_DRNG_SWITCH
+@@ -182,6 +182,33 @@ config LRNG_IRQ_ENTROPY_RATE
+ 	  interrupt entropy source will still deliver data but without
+ 	  being credited with entropy.
  
++comment "Jitter RNG Entropy Source"
++
 +config LRNG_JENT
 +	bool "Enable Jitter RNG as LRNG Seed Source"
 +	depends on CRYPTO
@@ -55,7 +58,22 @@ index e66e8cd1d86f..7e302b204f7c 100644
 +	  time or at runtime with the lrng_base.jitterrng configuration
 +	  variable.
 +
- endif # LRNG
++config LRNG_JENT_ENTROPY_RATE
++	int "Jitter RNG Entropy Source Entropy Rate"
++	range 0 256
++	default 16
++	help
++	  The option defines the amount of entropy the LRNG applies to 256
++	  bits of data obtained from the Jitter RNG entropy source. The
++	  LRNG enforces the limit that this value must be in the range
++	  between 0 and 256.
++
++	  In order to disable the Jitter RNG entropy source, the option
++	  has to be set to 0.
++
+ comment "CPU Entropy Source"
+ 
+ config LRNG_CPU_ENTROPY_RATE
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
 index 97d2b13d3227..6be88156010a 100644
 --- a/drivers/char/lrng/Makefile
@@ -67,13 +85,13 @@ index 97d2b13d3227..6be88156010a 100644
 +obj-$(CONFIG_LRNG_JENT)		+= lrng_jent.o
 diff --git a/drivers/char/lrng/lrng_jent.c b/drivers/char/lrng/lrng_jent.c
 new file mode 100644
-index 000000000000..ba1dd2ae89d2
+index 000000000000..2599ab9352b6
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_jent.c
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,90 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
-+ * LRNG Fast Noise Source: Jitter RNG
++ * LRNG Fast Entropy Source: Jitter RNG
 + *
 + * Copyright (C) 2016 - 2021, Stephan Mueller <smueller@chronox.de>
 + */
@@ -92,18 +110,17 @@ index 000000000000..ba1dd2ae89d2
 + * when it detects insufficient hardware, the chosen under estimation of
 + * entropy is considered to be acceptable to all reviewers.
 + */
-+static u32 jitterrng = LRNG_DRNG_SECURITY_STRENGTH_BITS>>4;
++static u32 jitterrng = CONFIG_LRNG_JENT_ENTROPY_RATE;
++#ifdef CONFIG_LRNG_RUNTIME_ES_CONFIG
 +module_param(jitterrng, uint, 0644);
 +MODULE_PARM_DESC(jitterrng, "Entropy in bits of 256 data bits from Jitter RNG noise source");
++#endif
 +
 +static bool lrng_jent_initialized = false;
 +static struct rand_data *lrng_jent_state;
 +
 +static int __init lrng_jent_initialize(void)
 +{
-+	u32 ent_bits = lrng_fast_noise_entropylevel(jitterrng,
-+					LRNG_DRNG_SECURITY_STRENGTH_BITS);
-+
 +	/* Initialize the Jitter RNG after the clocksources are initialized. */
 +	lrng_jent_state = jent_lrng_entropy_collector();
 +	if (!lrng_jent_state) {
@@ -112,7 +129,7 @@ index 000000000000..ba1dd2ae89d2
 +		return 0;
 +	}
 +	lrng_jent_initialized = true;
-+	lrng_update_entropy_thresh(ent_bits);
++	lrng_pool_add_entropy();
 +	pr_debug("Jitter RNG working on current system\n");
 +
 +	return 0;

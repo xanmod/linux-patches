@@ -1,6 +1,6 @@
-From 4c1f81c21012de2f24bdee070e95c276a319facd Mon Sep 17 00:00:00 2001
+From faab7426eba358fcd4f0f48c87f096e7d9c4d79e Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Mon, 24 May 2021 19:55:21 +0200
+Date: Fri, 18 Jun 2021 08:09:59 +0200
 Subject: [PATCH 07/13] char/lrng: add SP800-90A DRBG extension
 
 Using the LRNG switchable DRNG support, the SP800-90A DRBG extension is
@@ -37,6 +37,7 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+CC: Alexander Lobakin <alobakin@mailbox.org>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
@@ -49,10 +50,10 @@ Signed-off-by: Stephan Mueller <smueller@chronox.de>
  create mode 100644 drivers/char/lrng/lrng_drbg.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 14ff26e42daa..e5fe8a764059 100644
+index ab17c45a356b..aa611363b97e 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -171,6 +171,16 @@ config LRNG_KCAPI_HASH
+@@ -215,6 +215,16 @@ config LRNG_KCAPI_HASH
  	bool
  	select CRYPTO_HASH
  
