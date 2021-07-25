@@ -90,7 +90,7 @@ index ade407c1abb7..08b31257f7a9 100644
   */
  
  #include <linux/freezer.h>
-+#include <linux/pagemap.h>
++#include <linux/hugetlb.h>
  #include <linux/jhash.h>
  #include <linux/memblock.h>
 +#include <linux/pagemap.h>
@@ -293,7 +293,7 @@ index ade407c1abb7..08b31257f7a9 100644
 +		}
 +
 +		key->pointer = futex_get_inode_uuid(inode);
-+		key->index = (unsigned long)hugetlb_basepage_index(tail);
++		key->index = (unsigned long)page_to_pgoff(tail);
 +		key->offset |= FUT_OFF_INODE;
 +
 +		rcu_read_unlock();
