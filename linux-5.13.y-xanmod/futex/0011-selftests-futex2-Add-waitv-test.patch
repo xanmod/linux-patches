@@ -1,7 +1,7 @@
 From 2e29836852d20e647d61df6faf9ff53db2f73ead Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
 Date: Fri, 5 Feb 2021 10:34:02 -0300
-Subject: [PATCH 10/14] selftests: futex2: Add waitv test
+Subject: [PATCH 11/15] selftests: futex2: Add waitv test
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

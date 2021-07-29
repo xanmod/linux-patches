@@ -1,7 +1,7 @@
 From ba5ed62524b40c08695d681a58ff95dc9b24db91 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
 Date: Thu, 11 Feb 2021 10:47:23 -0300
-Subject: [PATCH 05/14] futex2: Add compatibility entry point for x86_x32 ABI
+Subject: [PATCH 06/15] futex2: Add compatibility entry point for x86_x32 ABI
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

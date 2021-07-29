@@ -1,7 +1,7 @@
 From 5343f9e6e83f1f77d6d07c890da49935c9cb9bb6 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
 Date: Fri, 5 Feb 2021 10:34:02 -0300
-Subject: [PATCH 13/14] kernel: Enable waitpid() for futex2
+Subject: [PATCH 14/15] kernel: Enable waitpid() for futex2
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

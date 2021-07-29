@@ -1,7 +1,7 @@
 From b2547d466f8be77b3d02edc66caad293843c2bfd Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
 Date: Fri, 5 Feb 2021 10:34:01 -0300
-Subject: [PATCH 02/14] futex2: Add support for shared futexes
+Subject: [PATCH 03/15] futex2: Add support for shared futexes
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

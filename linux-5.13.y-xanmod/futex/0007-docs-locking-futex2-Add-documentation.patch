@@ -1,7 +1,7 @@
 From d5621118e174509b1e75fc011d32e21be276285e Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
 Date: Tue, 9 Feb 2021 13:59:00 -0300
-Subject: [PATCH 06/14] docs: locking: futex2: Add documentation
+Subject: [PATCH 07/15] docs: locking: futex2: Add documentation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
