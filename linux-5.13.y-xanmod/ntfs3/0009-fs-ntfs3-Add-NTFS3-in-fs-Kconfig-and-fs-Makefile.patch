@@ -1,7 +1,7 @@
-From 7c9d02befc039313db68b1519f1d141261f6beeb Mon Sep 17 00:00:00 2001
+From d62fedc79930da0091898492157eb50760be802b Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 2 Apr 2021 18:53:46 +0300
-Subject: [PATCH 09/10] fs/ntfs3: Add NTFS3 in fs/Kconfig and fs/Makefile
+Subject: [PATCH 09/11] fs/ntfs3: Add NTFS3 in fs/Kconfig and fs/Makefile
 
 This adds NTFS3 in fs/Kconfig and fs/Makefile
 

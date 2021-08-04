@@ -1,7 +1,7 @@
-From 0737d42306861ebee6c3ae2001258d05adb15a67 Mon Sep 17 00:00:00 2001
+From 7dc8907fe5812e576e88007dcd6489ebf10e18c5 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 2 Apr 2021 18:53:39 +0300
-Subject: [PATCH 02/10] fs/ntfs3: Add initialization of super block
+Subject: [PATCH 02/11] fs/ntfs3: Add initialization of super block
 
 This adds initialization of super block
 
@@ -9,9 +9,9 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 ---
  fs/ntfs3/fsntfs.c | 2542 +++++++++++++++++++++++++++++++++++++++++++
  fs/ntfs3/index.c  | 2641 +++++++++++++++++++++++++++++++++++++++++++++
- fs/ntfs3/inode.c  | 2033 ++++++++++++++++++++++++++++++++++
+ fs/ntfs3/inode.c  | 2034 ++++++++++++++++++++++++++++++++++
  fs/ntfs3/super.c  | 1500 +++++++++++++++++++++++++
- 4 files changed, 8716 insertions(+)
+ 4 files changed, 8717 insertions(+)
  create mode 100644 fs/ntfs3/fsntfs.c
  create mode 100644 fs/ntfs3/index.c
  create mode 100644 fs/ntfs3/inode.c
@@ -5214,10 +5214,10 @@ index 000000000000..931a7241ef00
 +}
 diff --git a/fs/ntfs3/inode.c b/fs/ntfs3/inode.c
 new file mode 100644
-index 000000000000..9e836c192ddf
+index 000000000000..3e2056c95e84
 --- /dev/null
 +++ b/fs/ntfs3/inode.c
-@@ -0,0 +1,2033 @@
+@@ -0,0 +1,2034 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + *
@@ -7245,6 +7245,7 @@ index 000000000000..9e836c192ddf
 +	.write_end = ntfs_write_end,
 +	.direct_IO = ntfs_direct_IO,
 +	.bmap = ntfs_bmap,
++	.set_page_dirty = __set_page_dirty_buffers,
 +};
 +
 +const struct address_space_operations ntfs_aops_cmpr = {

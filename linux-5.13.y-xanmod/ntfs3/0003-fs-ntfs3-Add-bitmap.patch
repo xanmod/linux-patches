@@ -1,7 +1,7 @@
-From 885829d6df27fc704a6061ea49697cd41130b0de Mon Sep 17 00:00:00 2001
+From 43731f5316c1bbb32cd3b6d96d584fb2b2d9b85e Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 2 Apr 2021 18:53:40 +0300
-Subject: [PATCH 03/10] fs/ntfs3: Add bitmap
+Subject: [PATCH 03/11] fs/ntfs3: Add bitmap
 
 This adds bitmap
 

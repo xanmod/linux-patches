@@ -1,7 +1,7 @@
-From b89232db5a07a3e8b379e3ddf14299cc4d84f514 Mon Sep 17 00:00:00 2001
+From c0c2e4ce4ea1f735237d9e5a6f02f789874de868 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 2 Apr 2021 18:53:45 +0300
-Subject: [PATCH 08/10] fs/ntfs3: Add Kconfig, Makefile and doc
+Subject: [PATCH 08/11] fs/ntfs3: Add Kconfig, Makefile and doc
 
 This adds Kconfig, Makefile and doc
 

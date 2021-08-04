@@ -1,7 +1,7 @@
-From af78fb43d06f0759313f9d63dfafb456e8e8e95e Mon Sep 17 00:00:00 2001
+From f9e9d143419ff29f6b3ec218f2004a2a480763f4 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 2 Apr 2021 18:53:43 +0300
-Subject: [PATCH 06/10] fs/ntfs3: Add compression
+Subject: [PATCH 06/11] fs/ntfs3: Add compression
 
 This patch adds different types of NTFS-applicable compressions:
 - lznt
