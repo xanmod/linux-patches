@@ -1,0 +1,496 @@
+From 0d346a3d84782b2bb59a4ac8de5084bec0fe0723 Mon Sep 17 00:00:00 2001
+From: Con Kolivas <kernel@kolivas.org>
+Date: Mon, 15 Feb 2021 21:56:16 +0000
+Subject: [PATCH 4/8] hrtimer: Replace all schedule timeout(1) with
+ schedule_min_hrtimeout()
+
+Rebased-by: Alexandre Frade <kernel@xanmod.org>
+---
+ drivers/accessibility/speakup/speakup_acntpc.c  |  4 ++--
+ drivers/accessibility/speakup/speakup_apollo.c  |  2 +-
+ drivers/accessibility/speakup/speakup_decext.c  |  2 +-
+ drivers/accessibility/speakup/speakup_decpc.c   |  2 +-
+ drivers/accessibility/speakup/speakup_dectlk.c  |  2 +-
+ drivers/accessibility/speakup/speakup_dtlk.c    |  4 ++--
+ drivers/accessibility/speakup/speakup_keypc.c   |  4 ++--
+ drivers/accessibility/speakup/synth.c           | 14 ++++----------
+ drivers/block/swim.c                            |  5 +++--
+ drivers/char/ipmi/ipmi_msghandler.c             |  2 +-
+ drivers/char/ipmi/ipmi_ssif.c                   |  2 +-
+ drivers/comedi/drivers/ni_mio_common.c          |  2 +-
+ drivers/gpu/drm/vmwgfx/vmwgfx_irq.c             |  2 +-
+ drivers/media/pci/ivtv/ivtv-ioctl.c             |  2 +-
+ drivers/media/pci/ivtv/ivtv-streams.c           |  2 +-
+ drivers/mfd/ucb1x00-core.c                      |  2 +-
+ drivers/misc/sgi-xp/xpc_channel.c               |  2 +-
+ drivers/net/can/usb/peak_usb/pcan_usb.c         |  2 +-
+ drivers/net/usb/lan78xx.c                       |  2 +-
+ drivers/net/usb/usbnet.c                        |  2 +-
+ drivers/scsi/fnic/fnic_scsi.c                   |  4 ++--
+ drivers/scsi/snic/snic_scsi.c                   |  2 +-
+ drivers/staging/rts5208/rtsx.c                  |  2 +-
+ drivers/staging/unisys/visornic/visornic_main.c |  6 +++---
+ drivers/video/fbdev/omap/hwa742.c               |  2 +-
+ drivers/video/fbdev/pxafb.c                     |  2 +-
+ fs/btrfs/delalloc-space.c                       |  2 +-
+ sound/usb/line6/pcm.c                           |  2 +-
+ 28 files changed, 39 insertions(+), 44 deletions(-)
+
+diff --git a/drivers/accessibility/speakup/speakup_acntpc.c b/drivers/accessibility/speakup/speakup_acntpc.c
+index c1ec087dca13..b2d0d4266f62 100644
+--- a/drivers/accessibility/speakup/speakup_acntpc.c
++++ b/drivers/accessibility/speakup/speakup_acntpc.c
+@@ -198,7 +198,7 @@ static void do_catch_up(struct spk_synth *synth)
+ 		full_time_val = full_time->u.n.value;
+ 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
+ 		if (synth_full()) {
+-			schedule_timeout(msecs_to_jiffies(full_time_val));
++			schedule_msec_hrtimeout((full_time_val));
+ 			continue;
+ 		}
+ 		set_current_state(TASK_RUNNING);
+@@ -226,7 +226,7 @@ static void do_catch_up(struct spk_synth *synth)
+ 			jiffy_delta_val = jiffy_delta->u.n.value;
+ 			delay_time_val = delay_time->u.n.value;
+ 			spin_unlock_irqrestore(&speakup_info.spinlock, flags);
+-			schedule_timeout(msecs_to_jiffies(delay_time_val));
++			schedule_msec_hrtimeout(delay_time_val);
+ 			jiff_max = jiffies + jiffy_delta_val;
+ 		}
+ 	}
+diff --git a/drivers/accessibility/speakup/speakup_apollo.c b/drivers/accessibility/speakup/speakup_apollo.c
+index cd63581b2e99..d636157a2844 100644
+--- a/drivers/accessibility/speakup/speakup_apollo.c
++++ b/drivers/accessibility/speakup/speakup_apollo.c
+@@ -165,7 +165,7 @@ static void do_catch_up(struct spk_synth *synth)
+ 		if (!synth->io_ops->synth_out(synth, ch)) {
+ 			synth->io_ops->tiocmset(synth, 0, UART_MCR_RTS);
+ 			synth->io_ops->tiocmset(synth, UART_MCR_RTS, 0);
+-			schedule_timeout(msecs_to_jiffies(full_time_val));
++			schedule_msec_hrtimeout(full_time_val);
+ 			continue;
+ 		}
+ 		if (time_after_eq(jiffies, jiff_max) && (ch == SPACE)) {
+diff --git a/drivers/accessibility/speakup/speakup_decext.c b/drivers/accessibility/speakup/speakup_decext.c
+index 092cfd08a9e1..e7fc85f8ce5c 100644
+--- a/drivers/accessibility/speakup/speakup_decext.c
++++ b/drivers/accessibility/speakup/speakup_decext.c
+@@ -180,7 +180,7 @@ static void do_catch_up(struct spk_synth *synth)
+ 		if (ch == '\n')
+ 			ch = 0x0D;
+ 		if (synth_full() || !synth->io_ops->synth_out(synth, ch)) {
+-			schedule_timeout(msecs_to_jiffies(delay_time_val));
++			schedule_msec_hrtimeout(delay_time_val);
+ 			continue;
+ 		}
+ 		set_current_state(TASK_RUNNING);
+diff --git a/drivers/accessibility/speakup/speakup_decpc.c b/drivers/accessibility/speakup/speakup_decpc.c
+index dec314dee214..2a5deb5256b2 100644
+--- a/drivers/accessibility/speakup/speakup_decpc.c
++++ b/drivers/accessibility/speakup/speakup_decpc.c
+@@ -398,7 +398,7 @@ static void do_catch_up(struct spk_synth *synth)
+ 		if (ch == '\n')
+ 			ch = 0x0D;
+ 		if (dt_sendchar(ch)) {
+-			schedule_timeout(msecs_to_jiffies(delay_time_val));
++			schedule_msec_hrtimeout((delay_time_val));
+ 			continue;
+ 		}
+ 		set_current_state(TASK_RUNNING);
+diff --git a/drivers/accessibility/speakup/speakup_dectlk.c b/drivers/accessibility/speakup/speakup_dectlk.c
+index 580ec796816b..67c156b90ddb 100644
+--- a/drivers/accessibility/speakup/speakup_dectlk.c
++++ b/drivers/accessibility/speakup/speakup_dectlk.c
+@@ -256,7 +256,7 @@ static void do_catch_up(struct spk_synth *synth)
+ 		if (ch == '\n')
+ 			ch = 0x0D;
+ 		if (synth_full_val || !synth->io_ops->synth_out(synth, ch)) {
+-			schedule_timeout(msecs_to_jiffies(delay_time_val));
++			schedule_msec_hrtimeout(delay_time_val);
+ 			continue;
+ 		}
+ 		set_current_state(TASK_RUNNING);
+diff --git a/drivers/accessibility/speakup/speakup_dtlk.c b/drivers/accessibility/speakup/speakup_dtlk.c
+index 92838d3ae9eb..b687cb4d3268 100644
+--- a/drivers/accessibility/speakup/speakup_dtlk.c
++++ b/drivers/accessibility/speakup/speakup_dtlk.c
+@@ -211,7 +211,7 @@ static void do_catch_up(struct spk_synth *synth)
+ 		delay_time_val = delay_time->u.n.value;
+ 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
+ 		if (synth_full()) {
+-			schedule_timeout(msecs_to_jiffies(delay_time_val));
++			schedule_msec_hrtimeout((delay_time_val));
+ 			continue;
+ 		}
+ 		set_current_state(TASK_RUNNING);
+@@ -227,7 +227,7 @@ static void do_catch_up(struct spk_synth *synth)
+ 			delay_time_val = delay_time->u.n.value;
+ 			jiffy_delta_val = jiffy_delta->u.n.value;
+ 			spin_unlock_irqrestore(&speakup_info.spinlock, flags);
+-			schedule_timeout(msecs_to_jiffies(delay_time_val));
++			schedule_msec_hrtimeout((delay_time_val));
+ 			jiff_max = jiffies + jiffy_delta_val;
+ 		}
+ 	}
+diff --git a/drivers/accessibility/speakup/speakup_keypc.c b/drivers/accessibility/speakup/speakup_keypc.c
+index 311f4aa0be22..99c523fdcc98 100644
+--- a/drivers/accessibility/speakup/speakup_keypc.c
++++ b/drivers/accessibility/speakup/speakup_keypc.c
+@@ -199,7 +199,7 @@ static void do_catch_up(struct spk_synth *synth)
+ 		full_time_val = full_time->u.n.value;
+ 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
+ 		if (synth_full()) {
+-			schedule_timeout(msecs_to_jiffies(full_time_val));
++			schedule_msec_hrtimeout((full_time_val));
+ 			continue;
+ 		}
+ 		set_current_state(TASK_RUNNING);
+@@ -232,7 +232,7 @@ static void do_catch_up(struct spk_synth *synth)
+ 			jiffy_delta_val = jiffy_delta->u.n.value;
+ 			delay_time_val = delay_time->u.n.value;
+ 			spin_unlock_irqrestore(&speakup_info.spinlock, flags);
+-			schedule_timeout(msecs_to_jiffies(delay_time_val));
++			schedule_msec_hrtimeout(delay_time_val);
+ 			jiff_max = jiffies + jiffy_delta_val;
+ 		}
+ 	}
+diff --git a/drivers/accessibility/speakup/synth.c b/drivers/accessibility/speakup/synth.c
+index 2b8699673bac..bf0cbdaf564f 100644
+--- a/drivers/accessibility/speakup/synth.c
++++ b/drivers/accessibility/speakup/synth.c
+@@ -93,12 +93,8 @@ static void _spk_do_catch_up(struct spk_synth *synth, int unicode)
+ 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
+ 		if (ch == '\n')
+ 			ch = synth->procspeech;
+-		if (unicode)
+-			ret = synth->io_ops->synth_out_unicode(synth, ch);
+-		else
+-			ret = synth->io_ops->synth_out(synth, ch);
+-		if (!ret) {
+-			schedule_timeout(msecs_to_jiffies(full_time_val));
++		if (!synth->io_ops->synth_out(synth, ch)) {
++			schedule_msec_hrtimeout(full_time_val);
+ 			continue;
+ 		}
+ 		if (time_after_eq(jiffies, jiff_max) && (ch == SPACE)) {
+@@ -108,11 +104,9 @@ static void _spk_do_catch_up(struct spk_synth *synth, int unicode)
+ 			full_time_val = full_time->u.n.value;
+ 			spin_unlock_irqrestore(&speakup_info.spinlock, flags);
+ 			if (synth->io_ops->synth_out(synth, synth->procspeech))
+-				schedule_timeout(
+-					msecs_to_jiffies(delay_time_val));
++				schedule_msec_hrtimeout(delay_time_val);
+ 			else
+-				schedule_timeout(
+-					msecs_to_jiffies(full_time_val));
++				schedule_msec_hrtimeout(full_time_val);
+ 			jiff_max = jiffies + jiffy_delta_val;
+ 		}
+ 		set_current_state(TASK_RUNNING);
+diff --git a/drivers/block/swim.c b/drivers/block/swim.c
+index 7ccc8d2a41bc..86f29041cf98 100644
+--- a/drivers/block/swim.c
++++ b/drivers/block/swim.c
+@@ -328,7 +328,7 @@ static inline void swim_motor(struct swim __iomem *base,
+ 			if (swim_readbit(base, MOTOR_ON))
+ 				break;
+ 			set_current_state(TASK_INTERRUPTIBLE);
+-			schedule_timeout(1);
++			schedule_min_hrtimeout();
+ 		}
+ 	} else if (action == OFF) {
+ 		swim_action(base, MOTOR_OFF);
+@@ -347,7 +347,7 @@ static inline void swim_eject(struct swim __iomem *base)
+ 		if (!swim_readbit(base, DISK_IN))
+ 			break;
+ 		set_current_state(TASK_INTERRUPTIBLE);
+-		schedule_timeout(1);
++		schedule_min_hrtimeout();
+ 	}
+ 	swim_select(base, RELAX);
+ }
+@@ -372,6 +372,7 @@ static inline int swim_step(struct swim __iomem *base)
+ 
+ 		set_current_state(TASK_INTERRUPTIBLE);
+ 		schedule_timeout(1);
++		schedule_min_hrtimeout();
+ 
+ 		swim_select(base, RELAX);
+ 		if (!swim_readbit(base, STEP))
+diff --git a/drivers/char/ipmi/ipmi_msghandler.c b/drivers/char/ipmi/ipmi_msghandler.c
+index e96cb5c4f97a..d129cdab8b6e 100644
+--- a/drivers/char/ipmi/ipmi_msghandler.c
++++ b/drivers/char/ipmi/ipmi_msghandler.c
+@@ -3549,7 +3549,7 @@ static void cleanup_smi_msgs(struct ipmi_smi *intf)
+ 	/* Current message first, to preserve order */
+ 	while (intf->curr_msg && !list_empty(&intf->waiting_rcv_msgs)) {
+ 		/* Wait for the message to clear out. */
+-		schedule_timeout(1);
++		schedule_min_hrtimeout();
+ 	}
+ 
+ 	/* No need for locks, the interface is down. */
+diff --git a/drivers/char/ipmi/ipmi_ssif.c b/drivers/char/ipmi/ipmi_ssif.c
+index 20d5af92966d..05b8d6a8171f 100644
+--- a/drivers/char/ipmi/ipmi_ssif.c
++++ b/drivers/char/ipmi/ipmi_ssif.c
+@@ -1247,7 +1247,7 @@ static void shutdown_ssif(void *send_info)
+ 
+ 	/* make sure the driver is not looking for flags any more. */
+ 	while (ssif_info->ssif_state != SSIF_NORMAL)
+-		schedule_timeout(1);
++		schedule_min_hrtimeout();
+ 
+ 	ssif_info->stopping = true;
+ 	del_timer_sync(&ssif_info->watch_timer);
+diff --git a/drivers/comedi/drivers/ni_mio_common.c b/drivers/comedi/drivers/ni_mio_common.c
+index 4f80a4991f95..c164c8524909 100644
+--- a/drivers/comedi/drivers/ni_mio_common.c
++++ b/drivers/comedi/drivers/ni_mio_common.c
+@@ -4747,7 +4747,7 @@ static int cs5529_wait_for_idle(struct comedi_device *dev)
+ 		if ((status & NI67XX_CAL_STATUS_BUSY) == 0)
+ 			break;
+ 		set_current_state(TASK_INTERRUPTIBLE);
+-		if (schedule_timeout(1))
++		if (schedule_min_hrtimeout())
+ 			return -EIO;
+ 	}
+ 	if (i == timeout) {
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_irq.c b/drivers/gpu/drm/vmwgfx/vmwgfx_irq.c
+index b9a9b7ddadbd..e8447f466249 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_irq.c
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_irq.c
+@@ -198,7 +198,7 @@ int vmw_fallback_wait(struct vmw_private *dev_priv,
+ 			break;
+ 		}
+ 		if (lazy)
+-			schedule_timeout(1);
++			schedule_min_hrtimeout();
+ 		else if ((++count & 0x0F) == 0) {
+ 			/**
+ 			 * FIXME: Use schedule_hr_timeout here for
+diff --git a/drivers/media/pci/ivtv/ivtv-ioctl.c b/drivers/media/pci/ivtv/ivtv-ioctl.c
+index da19b2e95e6c..3d064c641306 100644
+--- a/drivers/media/pci/ivtv/ivtv-ioctl.c
++++ b/drivers/media/pci/ivtv/ivtv-ioctl.c
+@@ -1134,7 +1134,7 @@ void ivtv_s_std_dec(struct ivtv *itv, v4l2_std_id std)
+ 				TASK_UNINTERRUPTIBLE);
+ 		if ((read_reg(IVTV_REG_DEC_LINE_FIELD) >> 16) < 100)
+ 			break;
+-		schedule_timeout(msecs_to_jiffies(25));
++		schedule_msec_hrtimeout((25));
+ 	}
+ 	finish_wait(&itv->vsync_waitq, &wait);
+ 	mutex_lock(&itv->serialize_lock);
+diff --git a/drivers/media/pci/ivtv/ivtv-streams.c b/drivers/media/pci/ivtv/ivtv-streams.c
+index f04ee84bab5f..c4469b4b8f99 100644
+--- a/drivers/media/pci/ivtv/ivtv-streams.c
++++ b/drivers/media/pci/ivtv/ivtv-streams.c
+@@ -849,7 +849,7 @@ int ivtv_stop_v4l2_encode_stream(struct ivtv_stream *s, int gop_end)
+ 			while (!test_bit(IVTV_F_I_EOS, &itv->i_flags) &&
+ 				time_before(jiffies,
+ 					    then + msecs_to_jiffies(2000))) {
+-				schedule_timeout(msecs_to_jiffies(10));
++				schedule_msec_hrtimeout((10));
+ 			}
+ 
+ 			/* To convert jiffies to ms, we must multiply by 1000
+diff --git a/drivers/mfd/ucb1x00-core.c b/drivers/mfd/ucb1x00-core.c
+index b690796d24d4..448b13da62b4 100644
+--- a/drivers/mfd/ucb1x00-core.c
++++ b/drivers/mfd/ucb1x00-core.c
+@@ -250,7 +250,7 @@ unsigned int ucb1x00_adc_read(struct ucb1x00 *ucb, int adc_channel, int sync)
+ 			break;
+ 		/* yield to other processes */
+ 		set_current_state(TASK_INTERRUPTIBLE);
+-		schedule_timeout(1);
++		schedule_min_hrtimeout();
+ 	}
+ 
+ 	return UCB_ADC_DAT(val);
+diff --git a/drivers/misc/sgi-xp/xpc_channel.c b/drivers/misc/sgi-xp/xpc_channel.c
+index 8e6607fc8a67..b9ab770bbdb5 100644
+--- a/drivers/misc/sgi-xp/xpc_channel.c
++++ b/drivers/misc/sgi-xp/xpc_channel.c
+@@ -834,7 +834,7 @@ xpc_allocate_msg_wait(struct xpc_channel *ch)
+ 
+ 	atomic_inc(&ch->n_on_msg_allocate_wq);
+ 	prepare_to_wait(&ch->msg_allocate_wq, &wait, TASK_INTERRUPTIBLE);
+-	ret = schedule_timeout(1);
++	ret = schedule_min_hrtimeout();
+ 	finish_wait(&ch->msg_allocate_wq, &wait);
+ 	atomic_dec(&ch->n_on_msg_allocate_wq);
+ 
+diff --git a/drivers/net/can/usb/peak_usb/pcan_usb.c b/drivers/net/can/usb/peak_usb/pcan_usb.c
+index 899a3d21b77f..3747195b6cfd 100644
+--- a/drivers/net/can/usb/peak_usb/pcan_usb.c
++++ b/drivers/net/can/usb/peak_usb/pcan_usb.c
+@@ -300,7 +300,7 @@ static int pcan_usb_write_mode(struct peak_usb_device *dev, u8 onoff)
+ 	} else {
+ 		/* the PCAN-USB needs time to init */
+ 		set_current_state(TASK_INTERRUPTIBLE);
+-		schedule_timeout(msecs_to_jiffies(PCAN_USB_STARTUP_TIMEOUT));
++		schedule_msec_hrtimeout((PCAN_USB_STARTUP_TIMEOUT));
+ 	}
+ 
+ 	return err;
+diff --git a/drivers/net/usb/lan78xx.c b/drivers/net/usb/lan78xx.c
+index 6d092d78e0cb..8ec7cf9bdc02 100644
+--- a/drivers/net/usb/lan78xx.c
++++ b/drivers/net/usb/lan78xx.c
+@@ -2663,7 +2663,7 @@ static void lan78xx_terminate_urbs(struct lan78xx_net *dev)
+ 	while (!skb_queue_empty(&dev->rxq) &&
+ 	       !skb_queue_empty(&dev->txq) &&
+ 	       !skb_queue_empty(&dev->done)) {
+-		schedule_timeout(msecs_to_jiffies(UNLINK_TIMEOUT_MS));
++		schedule_msec_hrtimeout((UNLINK_TIMEOUT_MS));
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
+ 		netif_dbg(dev, ifdown, dev->net,
+ 			  "waited for %d urb completions\n", temp);
+diff --git a/drivers/net/usb/usbnet.c b/drivers/net/usb/usbnet.c
+index 470e1c1e6353..ac83ef6f7fa9 100644
+--- a/drivers/net/usb/usbnet.c
++++ b/drivers/net/usb/usbnet.c
+@@ -781,7 +781,7 @@ static void wait_skb_queue_empty(struct sk_buff_head *q)
+ 	spin_lock_irqsave(&q->lock, flags);
+ 	while (!skb_queue_empty(q)) {
+ 		spin_unlock_irqrestore(&q->lock, flags);
+-		schedule_timeout(msecs_to_jiffies(UNLINK_TIMEOUT_MS));
++		schedule_msec_hrtimeout((UNLINK_TIMEOUT_MS));
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
+ 		spin_lock_irqsave(&q->lock, flags);
+ 	}
+diff --git a/drivers/scsi/fnic/fnic_scsi.c b/drivers/scsi/fnic/fnic_scsi.c
+index 762cc8bd2653..c2b62b5113fc 100644
+--- a/drivers/scsi/fnic/fnic_scsi.c
++++ b/drivers/scsi/fnic/fnic_scsi.c
+@@ -217,7 +217,7 @@ int fnic_fw_reset_handler(struct fnic *fnic)
+ 
+ 	/* wait for io cmpl */
+ 	while (atomic_read(&fnic->in_flight))
+-		schedule_timeout(msecs_to_jiffies(1));
++		schedule_msec_hrtimeout((1));
+ 
+ 	spin_lock_irqsave(&fnic->wq_copy_lock[0], flags);
+ 
+@@ -2189,7 +2189,7 @@ static int fnic_clean_pending_aborts(struct fnic *fnic,
+ 		ret = iter_data.ret;
+ 		goto clean_pending_aborts_end;
+ 	}
+-	schedule_timeout(msecs_to_jiffies(2 * fnic->config.ed_tov));
++	schedule_msec_hrtimeout((2 * fnic->config.ed_tov));
+ 
+ 	/* walk again to check, if IOs are still pending in fw */
+ 	if (fnic_is_abts_pending(fnic, lr_sc))
+diff --git a/drivers/scsi/snic/snic_scsi.c b/drivers/scsi/snic/snic_scsi.c
+index 6dd0ff188bb4..aedf0b78f622 100644
+--- a/drivers/scsi/snic/snic_scsi.c
++++ b/drivers/scsi/snic/snic_scsi.c
+@@ -2349,7 +2349,7 @@ snic_reset(struct Scsi_Host *shost, struct scsi_cmnd *sc)
+ 
+ 	/* Wait for all the IOs that are entered in Qcmd */
+ 	while (atomic_read(&snic->ios_inflight))
+-		schedule_timeout(msecs_to_jiffies(1));
++		schedule_msec_hrtimeout((1));
+ 
+ 	ret = snic_issue_hba_reset(snic, sc);
+ 	if (ret) {
+diff --git a/drivers/staging/rts5208/rtsx.c b/drivers/staging/rts5208/rtsx.c
+index 898add4d1fc8..0aa9dd467349 100644
+--- a/drivers/staging/rts5208/rtsx.c
++++ b/drivers/staging/rts5208/rtsx.c
+@@ -477,7 +477,7 @@ static int rtsx_polling_thread(void *__dev)
+ 
+ 	for (;;) {
+ 		set_current_state(TASK_INTERRUPTIBLE);
+-		schedule_timeout(msecs_to_jiffies(POLLING_INTERVAL));
++		schedule_msec_hrtimeout((POLLING_INTERVAL));
+ 
+ 		/* lock the device pointers */
+ 		mutex_lock(&dev->dev_mutex);
+diff --git a/drivers/staging/unisys/visornic/visornic_main.c b/drivers/staging/unisys/visornic/visornic_main.c
+index a3bc568c660d..e7cac6df0202 100644
+--- a/drivers/staging/unisys/visornic/visornic_main.c
++++ b/drivers/staging/unisys/visornic/visornic_main.c
+@@ -547,7 +547,7 @@ static int visornic_disable_with_timeout(struct net_device *netdev,
+ 		}
+ 		set_current_state(TASK_INTERRUPTIBLE);
+ 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
+-		wait += schedule_timeout(msecs_to_jiffies(10));
++		wait += schedule_msec_hrtimeout((10));
+ 		spin_lock_irqsave(&devdata->priv_lock, flags);
+ 	}
+ 
+@@ -558,7 +558,7 @@ static int visornic_disable_with_timeout(struct net_device *netdev,
+ 		while (1) {
+ 			set_current_state(TASK_INTERRUPTIBLE);
+ 			spin_unlock_irqrestore(&devdata->priv_lock, flags);
+-			schedule_timeout(msecs_to_jiffies(10));
++			schedule_msec_hrtimeout((10));
+ 			spin_lock_irqsave(&devdata->priv_lock, flags);
+ 			if (atomic_read(&devdata->usage))
+ 				break;
+@@ -712,7 +712,7 @@ static int visornic_enable_with_timeout(struct net_device *netdev,
+ 		}
+ 		set_current_state(TASK_INTERRUPTIBLE);
+ 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
+-		wait += schedule_timeout(msecs_to_jiffies(10));
++		wait += schedule_msec_hrtimeout((10));
+ 		spin_lock_irqsave(&devdata->priv_lock, flags);
+ 	}
+ 
+diff --git a/drivers/video/fbdev/omap/hwa742.c b/drivers/video/fbdev/omap/hwa742.c
+index b191bef22d98..a8c491e1d844 100644
+--- a/drivers/video/fbdev/omap/hwa742.c
++++ b/drivers/video/fbdev/omap/hwa742.c
+@@ -927,7 +927,7 @@ static void hwa742_resume(void)
+ 		if (hwa742_read_reg(HWA742_PLL_DIV_REG) & (1 << 7))
+ 			break;
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
+-		schedule_timeout(msecs_to_jiffies(5));
++		schedule_msec_hrtimeout((5));
+ 	}
+ 	hwa742_set_update_mode(hwa742.update_mode_before_suspend);
+ }
+diff --git a/drivers/video/fbdev/pxafb.c b/drivers/video/fbdev/pxafb.c
+index f1551e00eb12..f0f651e92504 100644
+--- a/drivers/video/fbdev/pxafb.c
++++ b/drivers/video/fbdev/pxafb.c
+@@ -1287,7 +1287,7 @@ static int pxafb_smart_thread(void *arg)
+ 		mutex_unlock(&fbi->ctrlr_lock);
+ 
+ 		set_current_state(TASK_INTERRUPTIBLE);
+-		schedule_timeout(msecs_to_jiffies(30));
++		schedule_msec_hrtimeout((30));
+ 	}
+ 
+ 	pr_debug("%s(): task ending\n", __func__);
+diff --git a/fs/btrfs/delalloc-space.c b/fs/btrfs/delalloc-space.c
+index 2059d1504149..f2d1a73e4975 100644
+--- a/fs/btrfs/delalloc-space.c
++++ b/fs/btrfs/delalloc-space.c
+@@ -311,7 +311,7 @@ int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
+ 			flush = BTRFS_RESERVE_FLUSH_LIMIT;
+ 
+ 		if (btrfs_transaction_in_commit(fs_info))
+-			schedule_timeout(1);
++			schedule_min_hrtimeout();
+ 	}
+ 
+ 	num_bytes = ALIGN(num_bytes, fs_info->sectorsize);
+diff --git a/sound/usb/line6/pcm.c b/sound/usb/line6/pcm.c
+index fdbdfb7bce92..fa8e8faf3eb3 100644
+--- a/sound/usb/line6/pcm.c
++++ b/sound/usb/line6/pcm.c
+@@ -127,7 +127,7 @@ static void line6_wait_clear_audio_urbs(struct snd_line6_pcm *line6pcm,
+ 		if (!alive)
+ 			break;
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
+-		schedule_timeout(1);
++		schedule_min_hrtimeout();
+ 	} while (--timeout > 0);
+ 	if (alive)
+ 		dev_err(line6pcm->line6->ifcdev,
+-- 
+2.33.0
+
