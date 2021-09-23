@@ -1,6 +1,6 @@
-From 92be34c7858c2dbcb1f63ddf91f9db4a61bdeab2 Mon Sep 17 00:00:00 2001
+From 4d8e4be9a6a32a4c161d4f2998226445584ee367 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Fri, 18 Jun 2021 08:26:24 +0200
+Date: Mon, 2 Aug 2021 22:01:09 +0200
 Subject: [PATCH 13/13] char/lrng: add power-on and runtime self-tests
 
 Parts of the LRNG are already covered by self-tests, including:
@@ -64,17 +64,18 @@ CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
 CC: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 CC: Neil Horman <nhorman@redhat.com>
-CC: Alexander Lobakin <alobakin@mailbox.org>
+Reviewed-by: Alexander Lobakin <alobakin@pm.me>
+Tested-by: Alexander Lobakin <alobakin@pm.me>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
  drivers/char/lrng/Kconfig         |  43 +++-
  drivers/char/lrng/Makefile        |   1 +
- drivers/char/lrng/lrng_selftest.c | 351 ++++++++++++++++++++++++++++++
- 3 files changed, 387 insertions(+), 8 deletions(-)
+ drivers/char/lrng/lrng_selftest.c | 369 ++++++++++++++++++++++++++++++
+ 3 files changed, 405 insertions(+), 8 deletions(-)
  create mode 100644 drivers/char/lrng/lrng_selftest.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 379e89e7fa53..0c654f4db5e1 100644
+index 32692aff9774..de50abaf53cb 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
 @@ -165,15 +165,16 @@ config LRNG_COLLECTION_SIZE
@@ -102,7 +103,7 @@ index 379e89e7fa53..0c654f4db5e1 100644
  
  	  If unsure, say Y.
  
-@@ -485,4 +486,30 @@ config LRNG_TESTING
+@@ -493,4 +494,30 @@ config LRNG_TESTING
  
  endif #LRNG_TESTING_MENU
  
@@ -134,20 +135,20 @@ index 379e89e7fa53..0c654f4db5e1 100644
 +
  endif # LRNG
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index 532501b38a00..a633638af991 100644
+index 919c85cd103a..623813764aca 100644
 --- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
 @@ -17,3 +17,4 @@ obj-$(CONFIG_LRNG_KCAPI)	+= lrng_kcapi.o
- obj-$(CONFIG_LRNG_JENT)		+= lrng_jent.o
+ obj-$(CONFIG_LRNG_JENT)		+= lrng_es_jent.o
  obj-$(CONFIG_LRNG_HEALTH_TESTS)	+= lrng_health.o
  obj-$(CONFIG_LRNG_TESTING)	+= lrng_testing.o
 +obj-$(CONFIG_LRNG_SELFTEST)	+= lrng_selftest.o
 diff --git a/drivers/char/lrng/lrng_selftest.c b/drivers/char/lrng/lrng_selftest.c
 new file mode 100644
-index 000000000000..cd2b64184f01
+index 000000000000..e219f7ea832b
 --- /dev/null
 +++ b/drivers/char/lrng/lrng_selftest.c
-@@ -0,0 +1,351 @@
+@@ -0,0 +1,369 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
 + * LRNG power-on and on-demand self-test
@@ -180,12 +181,13 @@ index 000000000000..cd2b64184f01
 +
 +#include "lrng_chacha20.h"
 +#include "lrng_internal.h"
-+#include "lrng_sw_noise.h"
++#include "lrng_es_irq.h"
 +
 +#define LRNG_SELFTEST_PASSED		0
 +#define LRNG_SEFLTEST_ERROR_TIME	(1 << 0)
 +#define LRNG_SEFLTEST_ERROR_CHACHA20	(1 << 1)
 +#define LRNG_SEFLTEST_ERROR_HASH	(1 << 2)
++#define LRNG_SEFLTEST_ERROR_GCD		(1 << 3)
 +#define LRNG_SELFTEST_NOT_EXECUTED	0xffffffff
 +
 +static u32 lrng_data_selftest_ptr = 0;
@@ -456,12 +458,29 @@ index 000000000000..cd2b64184f01
 +	return LRNG_SEFLTEST_ERROR_CHACHA20;
 +}
 +
++static unsigned int lrng_gcd_selftest(void)
++{
++	u32 history[10];
++	unsigned int i;
++
++#define LRNG_GCD_SELFTEST 3
++	for (i = 0; i < ARRAY_SIZE(history); i++)
++		history[i] = i * LRNG_GCD_SELFTEST;
++
++	if (lrng_gcd_analyze(history, ARRAY_SIZE(history)) == LRNG_GCD_SELFTEST)
++		return LRNG_SELFTEST_PASSED;
++
++	pr_err("LRNG GCD self-test FAILED\n");
++	return LRNG_SEFLTEST_ERROR_GCD;
++}
++
 +static int lrng_selftest(void)
 +{
 +	unsigned int ret = lrng_data_process_selftest();
 +
 +	ret |= lrng_chacha20_drng_selftest();
 +	ret |= lrng_hash_selftest();
++	ret |= lrng_gcd_selftest();
 +
 +	if (ret) {
 +		if (IS_ENABLED(CONFIG_LRNG_SELFTEST_PANIC))
@@ -500,5 +519,5 @@ index 000000000000..cd2b64184f01
 +
 +module_init(lrng_selftest_init);
 -- 
-2.32.0
+2.33.0
 

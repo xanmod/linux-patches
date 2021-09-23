@@ -1,6 +1,6 @@
-From 374a7dee9bc69ff8449fa998aa333ec31b1a7c0e Mon Sep 17 00:00:00 2001
+From 5696a71288c07afef9d990c33b2132dcc25171ad Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Fri, 18 Jun 2021 08:03:15 +0200
+Date: Mon, 2 Aug 2021 21:49:21 +0200
 Subject: [PATCH 02/13] char/lrng: allocate one DRNG instance per NUMA node
 
 In order to improve NUMA-locality when serving getrandom(2) requests,
@@ -37,47 +37,29 @@ CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
 CC: Eric Biggers <ebiggers@kernel.org>
-CC: Alexander Lobakin <alobakin@mailbox.org>
+Reviewed-by: Alexander Lobakin <alobakin@pm.me>
+Tested-by: Alexander Lobakin <alobakin@pm.me>
 Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- drivers/char/lrng/Makefile        |   2 +
- drivers/char/lrng/lrng_internal.h |   5 ++
- drivers/char/lrng/lrng_numa.c     | 122 ++++++++++++++++++++++++++++++
- 3 files changed, 129 insertions(+)
+ drivers/char/lrng/Makefile    |   2 +
+ drivers/char/lrng/lrng_numa.c | 122 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 124 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_numa.c
 
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index e72e01c15bb9..29724c65287d 100644
+index c26f932628d7..80b152059598 100644
 --- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
-@@ -7,3 +7,5 @@ obj-y				+= lrng_pool.o lrng_aux.o \
- 				   lrng_sw_noise.o lrng_archrandom.o \
+@@ -7,3 +7,5 @@ obj-y				+= lrng_es_mgr.o lrng_aux.o \
+ 				   lrng_es_irq.o lrng_es_archrandom.o \
  				   lrng_drng.o lrng_chacha20.o \
- 				   lrng_interfaces.o
+ 				   lrng_interfaces.o lrng_es_aux.o
 +
 +obj-$(CONFIG_NUMA)		+= lrng_numa.o
-diff --git a/drivers/char/lrng/lrng_internal.h b/drivers/char/lrng/lrng_internal.h
-index f44ddf2a43d4..421a6f34a5a0 100644
---- a/drivers/char/lrng/lrng_internal.h
-+++ b/drivers/char/lrng/lrng_internal.h
-@@ -253,8 +253,13 @@ int lrng_drng_get_sleep(u8 *outbuf, u32 outbuflen);
- void lrng_drng_force_reseed(void);
- void lrng_drng_seed_work(struct work_struct *dummy);
- 
-+#ifdef CONFIG_NUMA
-+struct lrng_drng **lrng_drng_instances(void);
-+void lrng_drngs_numa_alloc(void);
-+#else	/* CONFIG_NUMA */
- static inline struct lrng_drng **lrng_drng_instances(void) { return NULL; }
- static inline void lrng_drngs_numa_alloc(void) { return; }
-+#endif /* CONFIG_NUMA */
- 
- /************************* Entropy sources management *************************/
- 
 diff --git a/drivers/char/lrng/lrng_numa.c b/drivers/char/lrng/lrng_numa.c
 new file mode 100644
 index 000000000000..fbfb40a5fb8d
@@ -207,5 +189,5 @@ index 000000000000..fbfb40a5fb8d
 +	schedule_work(&lrng_drngs_numa_alloc_work);
 +}
 -- 
-2.32.0
+2.33.0
 

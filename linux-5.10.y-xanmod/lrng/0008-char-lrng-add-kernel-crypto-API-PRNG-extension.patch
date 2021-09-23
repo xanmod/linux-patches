@@ -1,4 +1,4 @@
-From 0e6b8b1f0c9e72aa5711a85c20ea125674444d20 Mon Sep 17 00:00:00 2001
+From fa32eded39afc9dd677e1faf611291e35c91fbb6 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
 Date: Fri, 18 Jun 2021 08:10:53 +0200
 Subject: [PATCH 08/13] char/lrng: add kernel crypto API PRNG extension
@@ -33,7 +33,8 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
-CC: Alexander Lobakin <alobakin@mailbox.org>
+Reviewed-by: Alexander Lobakin <alobakin@pm.me>
+Tested-by: Alexander Lobakin <alobakin@pm.me>
 Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
@@ -71,7 +72,7 @@ index aa611363b97e..ffd2df43f2d4 100644
  
  endif # LRNG
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index 6ebd252db12f..97d2b13d3227 100644
+index 7e5acb8cac3d..ad7c413cc0d9 100644
 --- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
 @@ -13,3 +13,4 @@ obj-$(CONFIG_SYSCTL)		+= lrng_proc.o
@@ -313,5 +314,5 @@ index 000000000000..b06449cb2365
 +MODULE_AUTHOR("Stephan Mueller <smueller@chronox.de>");
 +MODULE_DESCRIPTION("Linux Random Number Generator - kernel crypto API DRNG backend");
 -- 
-2.32.0
+2.33.0
 

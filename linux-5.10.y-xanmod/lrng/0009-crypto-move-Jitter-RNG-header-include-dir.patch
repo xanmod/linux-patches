@@ -1,17 +1,14 @@
-From 5fc04febc149b2757b0c278f0e0bc2e509d927e5 Mon Sep 17 00:00:00 2001
+From e70000da096be3c896cb1ea6800765511f354c12 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
 Date: Wed, 16 Sep 2020 09:50:27 +0200
-Subject: [PATCH 09/13] crypto: provide access to a static Jitter RNG state
+Subject: [PATCH 09/13] crypto: move Jitter RNG header include dir
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
 To support the LRNG operation which uses the Jitter RNG separately
-from the kernel crypto API, at a time where potentially the regular
-memory management is not yet initialized, the Jitter RNG needs to
-provide a state whose memory is defined at compile time. As only once
-instance will ever be needed by the LRNG, define once static memory
-block which is solely to be used by the LRNG.
+from the kernel crypto API, the header file must be accessible to
+the LRNG code.
 
 CC: Torsten Duwe <duwe@lst.de>
 CC: "Eric W. Biederman" <ebiederm@xmission.com>
@@ -30,18 +27,19 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
-CC: Alexander Lobakin <alobakin@mailbox.org>
+Reviewed-by: Alexander Lobakin <alobakin@pm.me>
+Tested-by: Alexander Lobakin <alobakin@pm.me>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- crypto/jitterentropy-kcapi.c                  |  3 +-
- crypto/jitterentropy.c                        | 31 ++++++++++++++++++-
- .../crypto/internal}/jitterentropy.h          |  3 ++
- 3 files changed, 34 insertions(+), 3 deletions(-)
- rename {crypto => include/crypto/internal}/jitterentropy.h (84%)
+ crypto/jitterentropy-kcapi.c                        | 3 +--
+ crypto/jitterentropy.c                              | 2 +-
+ {crypto => include/crypto/internal}/jitterentropy.h | 0
+ 3 files changed, 2 insertions(+), 3 deletions(-)
+ rename {crypto => include/crypto/internal}/jitterentropy.h (100%)
 
 diff --git a/crypto/jitterentropy-kcapi.c b/crypto/jitterentropy-kcapi.c
 index e8a4165a1874..c90e60910827 100644
@@ -58,7 +56,7 @@ index e8a4165a1874..c90e60910827 100644
  /***************************************************************************
   * Helper function
 diff --git a/crypto/jitterentropy.c b/crypto/jitterentropy.c
-index 6e147c43fc18..fa1459f09b01 100644
+index 6e147c43fc18..d97c8bbe78c5 100644
 --- a/crypto/jitterentropy.c
 +++ b/crypto/jitterentropy.c
 @@ -117,7 +117,7 @@ struct rand_data {
@@ -70,53 +68,10 @@ index 6e147c43fc18..fa1459f09b01 100644
  
  /***************************************************************************
   * Adaptive Proportion Test
-@@ -854,3 +854,32 @@ int jent_entropy_init(void)
- 
- 	return 0;
- }
-+
-+struct rand_data *jent_lrng_entropy_collector(void)
-+{
-+	static unsigned char lrng_jent_mem[JENT_MEMORY_SIZE];
-+	static struct rand_data lrng_jent_state = {
-+		.data		= 0,
-+		.old_data	= 0,
-+		.prev_time	= 0,
-+		.last_delta	= 0,
-+		.last_delta2	= 0,
-+		.osr		= 1,
-+		.mem		= lrng_jent_mem,
-+		.memlocation	= 0,
-+		.memblocks	= JENT_MEMORY_BLOCKSIZE,
-+		.memblocksize	= JENT_MEMORY_BLOCKS,
-+		.memaccessloops	= JENT_MEMORY_ACCESSLOOPS,
-+		.rct_count	= 0,
-+		.apt_observations = 0,
-+		.apt_count	= 0,
-+		.apt_base	= 0,
-+		.apt_base_set	= 0,
-+		.health_failure = 0
-+	};
-+
-+	if (jent_entropy_init())
-+		return NULL;
-+
-+	return &lrng_jent_state;
-+}
 diff --git a/crypto/jitterentropy.h b/include/crypto/internal/jitterentropy.h
-similarity index 84%
+similarity index 100%
 rename from crypto/jitterentropy.h
 rename to include/crypto/internal/jitterentropy.h
-index c83fff32d130..6e07d86eac82 100644
---- a/crypto/jitterentropy.h
-+++ b/include/crypto/internal/jitterentropy.h
-@@ -15,3 +15,6 @@ extern int jent_read_entropy(struct rand_data *ec, unsigned char *data,
- extern struct rand_data *jent_entropy_collector_alloc(unsigned int osr,
- 						      unsigned int flags);
- extern void jent_entropy_collector_free(struct rand_data *entropy_collector);
-+
-+/* Access to statically allocated Jitter RNG instance */
-+extern struct rand_data *jent_lrng_entropy_collector(void);
 -- 
-2.32.0
+2.33.0
 

@@ -1,4 +1,4 @@
-From ed54a26225c035a5742db49599ed51d597b6157b Mon Sep 17 00:00:00 2001
+From 91f7a7f9c14c5127f7f40db433ec79c30f480639 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
 Date: Fri, 18 Jun 2021 08:08:20 +0200
 Subject: [PATCH 05/13] char/lrng: add common generic hash support
@@ -31,10 +31,11 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
-CC: Alexander Lobakin <alobakin@mailbox.org>
 CC: "Peter, Matthias" <matthias.peter@bsi.bund.de>
 CC: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 CC: Neil Horman <nhorman@redhat.com>
+Reviewed-by: Alexander Lobakin <alobakin@pm.me>
+Tested-by: Alexander Lobakin <alobakin@pm.me>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
  drivers/char/lrng/Kconfig           |   8 +++
@@ -63,10 +64,10 @@ index c10a0c3f2015..ab17c45a356b 100644
 +
  endif # LRNG
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index 0eb4a6849c88..40f8826edeeb 100644
+index dc3ef329b2c4..299715bb0ec2 100644
 --- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
-@@ -11,3 +11,4 @@ obj-y				+= lrng_pool.o lrng_aux.o \
+@@ -11,3 +11,4 @@ obj-y				+= lrng_es_mgr.o lrng_aux.o \
  obj-$(CONFIG_NUMA)		+= lrng_numa.o
  obj-$(CONFIG_SYSCTL)		+= lrng_proc.o
  obj-$(CONFIG_LRNG_DRNG_SWITCH)	+= lrng_switch.o
@@ -207,5 +208,5 @@ index 000000000000..2f94558d2dd6
 +
 +#endif /* _LRNG_KCAPI_HASH_H */
 -- 
-2.32.0
+2.33.0
 

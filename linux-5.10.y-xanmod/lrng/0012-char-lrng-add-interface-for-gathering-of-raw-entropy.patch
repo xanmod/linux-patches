@@ -1,6 +1,6 @@
-From 7032662597237ef97b5dc7c6a1fb5305284b7059 Mon Sep 17 00:00:00 2001
+From 302456e142673e02a4db06aaf1ffa2b90cd37593 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Fri, 18 Jun 2021 08:23:31 +0200
+Date: Mon, 2 Aug 2021 22:08:30 +0200
 Subject: [PATCH 12/13] char/lrng: add interface for gathering of raw entropy
 
 The test interface allows a privileged process to capture the raw
@@ -74,23 +74,24 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
-CC: Alexander Lobakin <alobakin@mailbox.org>
+Reviewed-by: Alexander Lobakin <alobakin@pm.me>
+Tested-by: Alexander Lobakin <alobakin@pm.me>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- drivers/char/lrng/Kconfig        | 162 ++++++++
+ drivers/char/lrng/Kconfig        | 170 ++++++++
  drivers/char/lrng/Makefile       |   1 +
  drivers/char/lrng/lrng_testing.c | 689 +++++++++++++++++++++++++++++++
- 3 files changed, 852 insertions(+)
+ 3 files changed, 860 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_testing.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 931959f75a83..379e89e7fa53 100644
+index 931959f75a83..32692aff9774 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -323,4 +323,166 @@ config LRNG_KCAPI
+@@ -323,4 +323,174 @@ config LRNG_KCAPI
  	  provided by the selected kernel crypto API RNG.
  endif # LRNG_DRNG_SWITCH
  
@@ -250,6 +251,14 @@ index 931959f75a83..379e89e7fa53 100644
 +	  lrng_jent.jitterrng for the Jitter RNG entropy source, and
 +	  lrng_sw_noise.irq_entropy for the interrupt entropy source.
 +
++config LRNG_RUNTIME_MAX_WO_RESEED_CONFIG
++	bool "Enable runtime configuration of max reseed threshold"
++	help
++	  When enabling this option, the LRNG provides an interface
++	  allowing the setting of the maximum number of DRNG generate
++	  operations without a reseed that has full entropy. The
++	  interface is lrng_drng.max_wo_reseed.
++
 +config LRNG_TESTING
 +	bool
 +	default y if (LRNG_RAW_HIRES_ENTROPY || LRNG_RAW_JIFFIES_ENTROPY ||LRNG_RAW_IRQ_ENTROPY || LRNG_RAW_IRQFLAGS_ENTROPY || LRNG_RAW_RETIP_ENTROPY || LRNG_RAW_REGS_ENTROPY || LRNG_RAW_ARRAY || LRNG_IRQ_PERF || LRNG_ACVT_HASH)
@@ -258,12 +267,12 @@ index 931959f75a83..379e89e7fa53 100644
 +
  endif # LRNG
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index 3c8637befb42..532501b38a00 100644
+index 02513621411b..919c85cd103a 100644
 --- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
 @@ -16,3 +16,4 @@ obj-$(CONFIG_LRNG_DRBG)		+= lrng_drbg.o
  obj-$(CONFIG_LRNG_KCAPI)	+= lrng_kcapi.o
- obj-$(CONFIG_LRNG_JENT)		+= lrng_jent.o
+ obj-$(CONFIG_LRNG_JENT)		+= lrng_es_jent.o
  obj-$(CONFIG_LRNG_HEALTH_TESTS)	+= lrng_health.o
 +obj-$(CONFIG_LRNG_TESTING)	+= lrng_testing.o
 diff --git a/drivers/char/lrng/lrng_testing.c b/drivers/char/lrng/lrng_testing.c
@@ -962,5 +971,5 @@ index 000000000000..99cc35abf45c
 +
 +module_init(lrng_raw_init);
 -- 
-2.32.0
+2.33.0
 

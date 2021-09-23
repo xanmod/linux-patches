@@ -1,6 +1,6 @@
-From 24bc5b9b17d4e8c886b801a7ebaa01814ee36895 Mon Sep 17 00:00:00 2001
+From be4cc15f7090d43f5e94468680c568155f9c7ca1 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Fri, 18 Jun 2021 08:17:40 +0200
+Date: Mon, 2 Aug 2021 21:59:23 +0200
 Subject: [PATCH 11/13] char/lrng: add SP800-90B compliant health tests
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -124,7 +124,8 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
-CC: Alexander Lobakin <alobakin@mailbox.org>
+Reviewed-by: Alexander Lobakin <alobakin@pm.me>
+Tested-by: Alexander Lobakin <alobakin@pm.me>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
@@ -204,13 +205,13 @@ index e622b8532e2b..931959f75a83 100644
  	int "Interrupt Entropy Source Entropy Rate"
  	range 256 4294967295
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index 6be88156010a..3c8637befb42 100644
+index 01a69172c464..02513621411b 100644
 --- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
 @@ -15,3 +15,4 @@ obj-$(CONFIG_LRNG_KCAPI_HASH)	+= lrng_kcapi_hash.o
  obj-$(CONFIG_LRNG_DRBG)		+= lrng_drbg.o
  obj-$(CONFIG_LRNG_KCAPI)	+= lrng_kcapi.o
- obj-$(CONFIG_LRNG_JENT)		+= lrng_jent.o
+ obj-$(CONFIG_LRNG_JENT)		+= lrng_es_jent.o
 +obj-$(CONFIG_LRNG_HEALTH_TESTS)	+= lrng_health.o
 diff --git a/drivers/char/lrng/lrng_health.c b/drivers/char/lrng/lrng_health.c
 new file mode 100644
@@ -629,5 +630,5 @@ index 000000000000..a56a0c4261ab
 +	return lrng_health_pass;
 +}
 -- 
-2.32.0
+2.33.0
 
