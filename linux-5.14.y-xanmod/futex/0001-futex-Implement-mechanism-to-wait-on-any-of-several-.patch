@@ -1,8 +1,7 @@
-From 884625cc61894f804c9d9fd0716a092ca6a145d1 Mon Sep 17 00:00:00 2001
-From: Alexandre Frade <kernel@xanmod.org>
-Date: Tue, 31 Aug 2021 17:06:58 +0000
-Subject: [PATCH 11/11] futex: Implement mechanism to wait on any of several
- futexes
+From 6afbd4f8cd3c74ca144409f92710c612bd8627b2 Mon Sep 17 00:00:00 2001
+From: Gabriel Krisman Bertazi <krisman@collabora.com>
+Date: Sat, 2 Oct 2021 17:14:02 +0000
+Subject: [PATCH] futex: Implement mechanism to wait on any of several futexes
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -53,8 +52,6 @@ number without breaking user space compatibility.
 
 Included Valve's Proton compatibility code.
 
-Applicable with futex2 patchset.
-
 CC: Steven Rostedt <rostedt@goodmis.org>
 Cc: Richard Yao <ryao@gentoo.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
@@ -71,37 +68,13 @@ Co-developed-by: André Almeida <andrealmeid@collabora.com>
 Signed-off-by: André Almeida <andrealmeid@collabora.com>
 
 Rebased-by: Alexandre Frade <kernel@xanmod.org>
-Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
- include/linux/futex.h      |   4 +
  include/uapi/linux/futex.h |  20 +++
- kernel/futex.c             | 347 ++++++++++++++++++++++++++++++++++++-
- 3 files changed, 370 insertions(+), 1 deletion(-)
+ kernel/futex.c             | 351 ++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 370 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/futex.h b/include/linux/futex.h
-index 18be31767024..1767e0584617 100644
---- a/include/linux/futex.h
-+++ b/include/linux/futex.h
-@@ -60,6 +60,8 @@ union futex_key {
-  * @rt_waiter:		rt_waiter storage for use with requeue_pi
-  * @requeue_pi_key:	the requeue_pi target futex key
-  * @bitset:		bitset for the optional bitmasked wakeup
-+ * @uaddr:		userspace address of futex
-+ * @uval:		expected futex's value
-  *
-  * We use this hashed waitqueue, instead of a normal wait_queue_entry_t, so
-  * we can wake only the relevant ones (hashed queues may be shared).
-@@ -82,6 +84,8 @@ struct futex_q {
- 	struct rt_mutex_waiter *rt_waiter;
- 	union futex_key *requeue_pi_key;
- 	u32 bitset;
-+	u32 __user *uaddr;
-+	u32 uval;
- } __randomize_layout;
- 
- struct futex_vector {
 diff --git a/include/uapi/linux/futex.h b/include/uapi/linux/futex.h
-index 45691d51cc61..5d268afb929b 100644
+index 235e5b2facaa..ba4f0186f991 100644
 --- a/include/uapi/linux/futex.h
 +++ b/include/uapi/linux/futex.h
 @@ -22,6 +22,7 @@
@@ -118,10 +91,10 @@ index 45691d51cc61..5d268afb929b 100644
  					 FUTEX_PRIVATE_FLAG)
 +#define FUTEX_WAIT_MULTIPLE_PRIVATE	(FUTEX_WAIT_MULTIPLE | \
 +					 FUTEX_PRIVATE_FLAG)
- #define FUTEX_32	2
- #define FUTEX_SHARED_FLAG 8
- #define FUTEX_SIZE_MASK	0x3
-@@ -169,4 +172,21 @@ struct robust_list_head {
+ 
+ /*
+  * Support for robust futexes: the kernel cleans up held futexes at
+@@ -152,4 +155,21 @@ struct robust_list_head {
    (((op & 0xf) << 28) | ((cmp & 0xf) << 24)		\
     | ((oparg & 0xfff) << 12) | (cmparg & 0xfff))
  
@@ -144,10 +117,28 @@ index 45691d51cc61..5d268afb929b 100644
 +
  #endif /* _UAPI_LINUX_FUTEX_H */
 diff --git a/kernel/futex.c b/kernel/futex.c
-index 2cd922ab82da..fbd98805c5a6 100644
+index 2ecb07575055..ba32c830a527 100644
 --- a/kernel/futex.c
 +++ b/kernel/futex.c
-@@ -2240,6 +2240,29 @@ int unqueue_me(struct futex_q *q)
+@@ -197,6 +197,8 @@ struct futex_pi_state {
+  * @rt_waiter:		rt_waiter storage for use with requeue_pi
+  * @requeue_pi_key:	the requeue_pi target futex key
+  * @bitset:		bitset for the optional bitmasked wakeup
++ * @uaddr:             userspace address of futex
++ * @uval:              expected futex's value
+  *
+  * We use this hashed waitqueue, instead of a normal wait_queue_entry_t, so
+  * we can wake only the relevant ones (hashed queues may be shared).
+@@ -219,6 +221,8 @@ struct futex_q {
+ 	struct rt_mutex_waiter *rt_waiter;
+ 	union futex_key *requeue_pi_key;
+ 	u32 bitset;
++	u32 __user *uaddr;
++	u32 uval;
+ } __randomize_layout;
+ 
+ static const struct futex_q futex_q_init = {
+@@ -2313,6 +2317,29 @@ static int unqueue_me(struct futex_q *q)
  	return ret;
  }
  
@@ -177,7 +168,7 @@ index 2cd922ab82da..fbd98805c5a6 100644
  /*
   * PI futexes can not be requeued and must remove themselves from the
   * hash bucket. The hash bucket lock (i.e. lock_ptr) is held.
-@@ -2603,6 +2626,205 @@ static int futex_wait_setup(u32 __user *uaddr, u32 val, unsigned int flags,
+@@ -2676,6 +2703,205 @@ static int futex_wait_setup(u32 __user *uaddr, u32 val, unsigned int flags,
  	return ret;
  }
  
@@ -380,10 +371,10 @@ index 2cd922ab82da..fbd98805c5a6 100644
 +	return ret;
 +}
 +
- int futex_wait(u32 __user *uaddr, unsigned int flags, u32 val,
- 	       ktime_t *abs_time, u32 bitset)
+ static int futex_wait(u32 __user *uaddr, unsigned int flags, u32 val,
+ 		      ktime_t *abs_time, u32 bitset)
  {
-@@ -3693,6 +3915,7 @@ static __always_inline bool futex_cmd_has_timeout(u32 cmd)
+@@ -3766,6 +3992,7 @@ static __always_inline bool futex_cmd_has_timeout(u32 cmd)
  	case FUTEX_LOCK_PI2:
  	case FUTEX_WAIT_BITSET:
  	case FUTEX_WAIT_REQUEUE_PI:
@@ -391,7 +382,7 @@ index 2cd922ab82da..fbd98805c5a6 100644
  		return true;
  	}
  	return false;
-@@ -3705,13 +3928,51 @@ futex_init_timeout(u32 cmd, u32 op, struct timespec64 *ts, ktime_t *t)
+@@ -3778,13 +4005,51 @@ futex_init_timeout(u32 cmd, u32 op, struct timespec64 *ts, ktime_t *t)
  		return -EINVAL;
  
  	*t = timespec64_to_ktime(*ts);
@@ -444,7 +435,7 @@ index 2cd922ab82da..fbd98805c5a6 100644
  SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
  		const struct __kernel_timespec __user *, utime,
  		u32 __user *, uaddr2, u32, val3)
-@@ -3731,6 +3992,25 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
+@@ -3804,6 +4069,25 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
  		tp = &t;
  	}
  
@@ -470,7 +461,7 @@ index 2cd922ab82da..fbd98805c5a6 100644
  	return do_futex(uaddr, op, val, tp, uaddr2, (unsigned long)utime, val3);
  }
  
-@@ -3893,6 +4173,58 @@ COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
+@@ -3966,6 +4250,58 @@ COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
  #endif /* CONFIG_COMPAT */
  
  #ifdef CONFIG_COMPAT_32BIT_TIME
@@ -529,7 +520,7 @@ index 2cd922ab82da..fbd98805c5a6 100644
  SYSCALL_DEFINE6(futex_time32, u32 __user *, uaddr, int, op, u32, val,
  		const struct old_timespec32 __user *, utime, u32 __user *, uaddr2,
  		u32, val3)
-@@ -3910,6 +4242,19 @@ SYSCALL_DEFINE6(futex_time32, u32 __user *, uaddr, int, op, u32, val,
+@@ -3983,6 +4319,19 @@ SYSCALL_DEFINE6(futex_time32, u32 __user *, uaddr, int, op, u32, val,
  		tp = &t;
  	}
  
