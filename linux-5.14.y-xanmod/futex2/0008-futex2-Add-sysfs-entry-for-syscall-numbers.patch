@@ -1,7 +1,7 @@
-From 8bfada78c156751051cf81f537707f61d79d2e66 Mon Sep 17 00:00:00 2001
+From 90383d79db7ccfa57657589d56e714807400e679 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
 Date: Fri, 5 Feb 2021 10:34:02 -0300
-Subject: [PATCH 09/11] futex2: Add sysfs entry for syscall numbers
+Subject: [PATCH 8/8] futex2: Add sysfs entry for syscall numbers
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -12,20 +12,19 @@ process. Expose futex2 syscall number via sysfs so tools that are
 experimenting with futex2 (like Proton/Wine) can test it and set the
 syscall number at runtime, rather than setting it at compilation time.
 
-Signed-off-by: André Almeida <andrealmeid@collabora.com>
+Signed-off-by: AndrÃ© Almeida <andrealmeid@collabora.com>
 ---
- kernel/futex2.c | 42 ++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 42 insertions(+)
+ kernel/futex2.c | 51 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 51 insertions(+)
 
 diff --git a/kernel/futex2.c b/kernel/futex2.c
-index 2e3bca1ac0b4..577efbfb4634 100644
+index 9564cf375a3e..6191a6c11de0 100644
 --- a/kernel/futex2.c
 +++ b/kernel/futex2.c
-@@ -428,3 +428,45 @@ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
- 
- 	return futex_wake(uaddr, futex_flags, nr_wake, FUTEX_BITSET_MATCH_ANY);
+@@ -1224,6 +1224,57 @@ SYSCALL_DEFINE6(futex_requeue, struct futex_requeue __user *, uaddr1,
+ 	return __futex_requeue(rq1, rq2, nr_wake, nr_requeue, cmpval, shared1, shared2);
  }
-+
+ 
 +static ssize_t wait_show(struct kobject *kobj, struct kobj_attribute *attr,
 +			     char *buf)
 +{
@@ -50,10 +49,19 @@ index 2e3bca1ac0b4..577efbfb4634 100644
 +}
 +static struct kobj_attribute futex2_waitv_attr = __ATTR_RO(waitv);
 +
++static ssize_t requeue_show(struct kobject *kobj, struct kobj_attribute *attr,
++			     char *buf)
++{
++	return sprintf(buf, "%u\n", __NR_futex_requeue);
++
++}
++static struct kobj_attribute futex2_requeue_attr = __ATTR_RO(requeue);
++
 +static struct attribute *futex2_sysfs_attrs[] = {
 +	&futex2_wait_attr.attr,
 +	&futex2_wake_attr.attr,
 +	&futex2_waitv_attr.attr,
++	&futex2_requeue_attr.attr,
 +	NULL,
 +};
 +
@@ -67,6 +75,10 @@ index 2e3bca1ac0b4..577efbfb4634 100644
 +	return sysfs_create_group(kernel_kobj, &futex2_sysfs_attr_group);
 +}
 +subsys_initcall(futex2_sysfs_init);
++
+ static int __init futex2_init(void)
+ {
+ 	int i;
 -- 
 2.33.0
 
