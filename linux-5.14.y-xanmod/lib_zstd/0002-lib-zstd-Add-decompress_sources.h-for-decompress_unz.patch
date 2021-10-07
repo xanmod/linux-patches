@@ -1,6 +1,6 @@
-From 21f121cc9f0c5dd91d1d30caf26f579b64d10d66 Mon Sep 17 00:00:00 2001
+From 4ac0c49d91348684d57634a74f7c3bfb08831b23 Mon Sep 17 00:00:00 2001
 From: Nick Terrell <terrelln@fb.com>
-Date: Thu, 29 Apr 2021 18:31:55 -0700
+Date: Mon, 14 Sep 2020 12:54:12 -0700
 Subject: [PATCH 2/4] lib: zstd: Add decompress_sources.h for decompress_unzstd
 
 Adds decompress_sources.h which includes every .c file necessary for
@@ -36,11 +36,11 @@ index c076d6f05064..a512b99ae16a 100644
  #include <linux/decompress/mm.h>
 diff --git a/lib/zstd/decompress_sources.h b/lib/zstd/decompress_sources.h
 new file mode 100644
-index 000000000000..d82cea4316f5
+index 000000000000..9ba367b44149
 --- /dev/null
 +++ b/lib/zstd/decompress_sources.h
 @@ -0,0 +1,23 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
++/* SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause */
 +/*
 + * Copyright (c) Facebook, Inc.
 + * All rights reserved.

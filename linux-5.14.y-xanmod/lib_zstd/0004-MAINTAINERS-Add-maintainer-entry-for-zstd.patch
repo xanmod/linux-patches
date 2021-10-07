@@ -1,6 +1,6 @@
-From f2dc3b8ebb34b86111e115ce795a154bccc13319 Mon Sep 17 00:00:00 2001
+From 59727e7f83918e2f04626b73bf5335b29166b011 Mon Sep 17 00:00:00 2001
 From: Nick Terrell <terrelln@fb.com>
-Date: Thu, 29 Apr 2021 18:31:57 -0700
+Date: Mon, 26 Apr 2021 16:34:03 -0700
 Subject: [PATCH 4/4] MAINTAINERS: Add maintainer entry for zstd
 
 Adds a maintainer entry for zstd listing myself as the maintainer for
@@ -13,10 +13,10 @@ Signed-off-by: Nick Terrell <terrelln@fb.com>
  1 file changed, 12 insertions(+)
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index f609786d1d1d..0b143493ec24 100644
+index 2fdc5f83730c..73e2027158df 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -20573,6 +20573,18 @@ F:	Documentation/vm/zsmalloc.rst
+@@ -20582,6 +20582,18 @@ F:	Documentation/vm/zsmalloc.rst
  F:	include/linux/zsmalloc.h
  F:	mm/zsmalloc.c
  

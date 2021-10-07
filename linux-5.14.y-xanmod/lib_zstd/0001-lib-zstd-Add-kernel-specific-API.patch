@@ -1,6 +1,6 @@
-From c2ceccf5e4d8376ce04b475e66a95ddcc089a90c Mon Sep 17 00:00:00 2001
+From abe109bc3c9987f2ad77ff7a699d577973c8966d Mon Sep 17 00:00:00 2001
 From: Nick Terrell <terrelln@fb.com>
-Date: Thu, 29 Apr 2021 18:31:54 -0700
+Date: Fri, 11 Sep 2020 16:49:00 -0700
 Subject: [PATCH 1/4] lib: zstd: Add kernel-specific API
 
 This patch:
@@ -307,7 +307,7 @@ index 3e26b466476a..6d984a832d0f 100644
  			goto finish;
  		}
 diff --git a/fs/f2fs/compress.c b/fs/f2fs/compress.c
-index 455561826c7d..003c602b0957 100644
+index b8b3f1160afa..91b110df6967 100644
 --- a/fs/f2fs/compress.c
 +++ b/fs/f2fs/compress.c
 @@ -334,8 +334,8 @@ static const struct f2fs_compress_ops f2fs_lz4_ops = {
@@ -441,7 +441,7 @@ index 455561826c7d..003c602b0957 100644
  	}
  
 diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
-index 8fecd3050ccd..8164ed1bcfe7 100644
+index 2b093a209ae4..2fca4bcfba3c 100644
 --- a/fs/f2fs/super.c
 +++ b/fs/f2fs/super.c
 @@ -588,7 +588,7 @@ static int f2fs_set_zstd_level(struct f2fs_sb_info *sbi, const char *str)
