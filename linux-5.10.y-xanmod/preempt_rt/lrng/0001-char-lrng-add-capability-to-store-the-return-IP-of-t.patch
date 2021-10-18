@@ -1,4 +1,4 @@
-From ca2f9b1cae7299ffb8a8c51a5a015dda2839ba43 Mon Sep 17 00:00:00 2001
+From 1db06d427424031fba8526cb3f210864a0c99a51 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Sat, 24 Jul 2021 19:53:14 +0000
 Subject: [PATCH] char/lrng: add capability to store the return IP of the hard
@@ -6,14 +6,14 @@ Subject: [PATCH] char/lrng: add capability to store the return IP of the hard
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
- drivers/char/lrng/lrng_sw_noise.c | 2 +-
+ drivers/char/lrng/lrng_es_irq.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/char/lrng/lrng_sw_noise.c b/drivers/char/lrng/lrng_sw_noise.c
-index b1994ecce6da..42957501703c 100644
---- a/drivers/char/lrng/lrng_sw_noise.c
-+++ b/drivers/char/lrng/lrng_sw_noise.c
-@@ -660,7 +660,7 @@ static inline void lrng_time_process(void)
+diff --git a/drivers/char/lrng/lrng_es_irq.c b/drivers/char/lrng/lrng_es_irq.c
+index 675425d87481..27b63d5cff20 100644
+--- a/drivers/char/lrng/lrng_es_irq.c
++++ b/drivers/char/lrng/lrng_es_irq.c
+@@ -754,7 +754,7 @@ static inline void lrng_time_process(void)
  }
  
  /* Hot code path - Callback for interrupt handler */
@@ -23,5 +23,5 @@ index b1994ecce6da..42957501703c 100644
  	if (lrng_pool_highres_timer()) {
  		lrng_time_process();
 -- 
-2.32.0
+2.33.0
 
