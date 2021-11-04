@@ -1,6 +1,6 @@
-From c91dbcadce7dc7fcb0008e8989f9316cd5f0826a Mon Sep 17 00:00:00 2001
+From 40691db0a62e925d5e8ee8e998f85f4d3d47f96b Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:06:02 +0800
+Date: Fri, 29 Oct 2021 21:02:38 +0800
 Subject: [PATCH 18/21] cpupower: enable boost state support for amd-pstate
  module
 
@@ -29,10 +29,10 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  3 files changed, 25 insertions(+)
 
 diff --git a/tools/power/cpupower/utils/helpers/amd.c b/tools/power/cpupower/utils/helpers/amd.c
-index b953277215c0..de68c14574c0 100644
+index f233a6ab75ac..92b9fb631768 100644
 --- a/tools/power/cpupower/utils/helpers/amd.c
 +++ b/tools/power/cpupower/utils/helpers/amd.c
-@@ -184,5 +184,23 @@ static unsigned long amd_pstate_get_data(unsigned int cpu,
+@@ -182,5 +182,23 @@ static unsigned long amd_pstate_get_data(unsigned int cpu,
  						  MAX_AMD_PSTATE_VALUE_READ_FILES);
  }
  
@@ -57,22 +57,22 @@ index b953277215c0..de68c14574c0 100644
  /* AMD P-States Helper Functions ***************/
  #endif /* defined(__i386__) || defined(__x86_64__) */
 diff --git a/tools/power/cpupower/utils/helpers/helpers.h b/tools/power/cpupower/utils/helpers/helpers.h
-index ae96efac759f..976c142ecfa0 100644
+index e03cc97297aa..c03925bea655 100644
 --- a/tools/power/cpupower/utils/helpers/helpers.h
 +++ b/tools/power/cpupower/utils/helpers/helpers.h
-@@ -139,6 +139,8 @@ extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
+@@ -140,6 +140,8 @@ extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
  
  /* AMD P-States stuff **************************/
- extern unsigned long cpupower_amd_pstate_enabled(void);
+ extern bool cpupower_amd_pstate_enabled(void);
 +extern void amd_pstate_boost_init(unsigned int cpu,
 +				  int *support, int *active);
  
  /* AMD P-States stuff **************************/
  
-@@ -176,6 +178,9 @@ static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
+@@ -177,6 +179,9 @@ static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
  
- static inline unsigned long cpupower_amd_pstate_enabled(void)
- { return 0; }
+ static inline bool cpupower_amd_pstate_enabled(void)
+ { return false; }
 +static void amd_pstate_boost_init(unsigned int cpu,
 +				  int *support, int *active)
 +{ return; }
@@ -80,10 +80,10 @@ index ae96efac759f..976c142ecfa0 100644
  /* cpuid and cpuinfo helpers  **************************/
  
 diff --git a/tools/power/cpupower/utils/helpers/misc.c b/tools/power/cpupower/utils/helpers/misc.c
-index 39ff154ea9cf..99d1dc8917d0 100644
+index 0c483cdefcc2..e0d3145434d3 100644
 --- a/tools/power/cpupower/utils/helpers/misc.c
 +++ b/tools/power/cpupower/utils/helpers/misc.c
-@@ -39,6 +39,8 @@ int cpufreq_has_boost_support(unsigned int cpu, int *support, int *active,
+@@ -41,6 +41,8 @@ int cpufreq_has_boost_support(unsigned int cpu, int *support, int *active,
  			if (ret)
  				return ret;
  		}
@@ -93,5 +93,5 @@ index 39ff154ea9cf..99d1dc8917d0 100644
  		*support = *active = 1;
  	return 0;
 -- 
-2.33.0
+2.33.1
 

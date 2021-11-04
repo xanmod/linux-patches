@@ -1,6 +1,6 @@
-From 510fe697cf54f94adb90d48f01fd240a763b2cbf Mon Sep 17 00:00:00 2001
+From ef9b95b108ade518be068c70b488fd6802534531 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:05:55 +0800
+Date: Fri, 29 Oct 2021 21:02:31 +0800
 Subject: [PATCH 11/21] cpufreq: amd: add amd-pstate frequencies attributes
 
 Introduce sysfs attributes to get the different level processor
@@ -8,22 +8,25 @@ frequencies.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- drivers/cpufreq/amd-pstate.c | 71 +++++++++++++++++++++++++++++++++++-
- 1 file changed, 70 insertions(+), 1 deletion(-)
+ drivers/cpufreq/amd-pstate.c | 63 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 63 insertions(+)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 74f896232d5a..16fed25c3400 100644
+index 9af27ac1f818..8cf1e80f44e0 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -517,16 +517,85 @@ static int amd_pstate_cpu_exit(struct cpufreq_policy *policy)
+@@ -485,6 +485,68 @@ static int amd_pstate_cpu_exit(struct cpufreq_policy *policy)
  	return 0;
  }
  
--static ssize_t show_is_amd_pstate_enabled(struct cpufreq_policy *policy,
 +/* Sysfs attributes */
 +
++/* This frequency is to indicate the maximum hardware frequency.
++ * If boost is not active but supported, the frequency will be larger than the
++ * one in cpuinfo.
++ */
 +static ssize_t show_amd_pstate_max_freq(struct cpufreq_policy *policy,
- 					char *buf)
++					char *buf)
 +{
 +	int max_freq;
 +	struct amd_cpudata *cpudata;
@@ -52,8 +55,8 @@ index 74f896232d5a..16fed25c3400 100644
 +	return sprintf(&buf[0], "%u\n", nominal_freq);
 +}
 +
-+static ssize_t
-+show_amd_pstate_lowest_nonlinear_freq(struct cpufreq_policy *policy, char *buf)
++static ssize_t show_amd_pstate_lowest_nonlinear_freq(struct cpufreq_policy *policy,
++						     char *buf)
 +{
 +	int freq;
 +	struct amd_cpudata *cpudata;
@@ -67,41 +70,28 @@ index 74f896232d5a..16fed25c3400 100644
 +	return sprintf(&buf[0], "%u\n", freq);
 +}
 +
-+static ssize_t show_amd_pstate_min_freq(struct cpufreq_policy *policy, char *buf)
-+{
-+	int min_freq;
-+	struct amd_cpudata *cpudata;
-+
-+	cpudata = policy->driver_data;
-+
-+	min_freq = amd_get_min_freq(cpudata);
-+	if (min_freq < 0)
-+		return min_freq;
-+
-+	return sprintf(&buf[0], "%u\n", min_freq);
-+}
-+
-+static ssize_t show_is_amd_pstate_enabled(struct cpufreq_policy *policy,
-+					  char *buf)
- {
- 	return sprintf(&buf[0], "%d\n", acpi_cpc_valid() ?  1 : 0);
- }
- 
- cpufreq_freq_attr_ro(is_amd_pstate_enabled);
 +cpufreq_freq_attr_ro(amd_pstate_max_freq);
 +cpufreq_freq_attr_ro(amd_pstate_nominal_freq);
 +cpufreq_freq_attr_ro(amd_pstate_lowest_nonlinear_freq);
-+cpufreq_freq_attr_ro(amd_pstate_min_freq);
- 
- static struct freq_attr *amd_pstate_attr[] = {
- 	&is_amd_pstate_enabled,
++
++static struct freq_attr *amd_pstate_attr[] = {
 +	&amd_pstate_max_freq,
 +	&amd_pstate_nominal_freq,
 +	&amd_pstate_lowest_nonlinear_freq,
-+	&amd_pstate_min_freq,
- 	NULL,
++	NULL,
++};
++
+ static struct cpufreq_driver amd_pstate_driver = {
+ 	.flags		= CPUFREQ_CONST_LOOPS | CPUFREQ_NEED_UPDATE_LIMITS,
+ 	.verify		= amd_pstate_verify,
+@@ -493,6 +555,7 @@ static struct cpufreq_driver amd_pstate_driver = {
+ 	.exit		= amd_pstate_cpu_exit,
+ 	.set_boost	= amd_pstate_set_boost,
+ 	.name		= "amd-pstate",
++	.attr           = amd_pstate_attr,
  };
  
+ static int __init amd_pstate_init(void)
 -- 
-2.33.0
+2.33.1
 

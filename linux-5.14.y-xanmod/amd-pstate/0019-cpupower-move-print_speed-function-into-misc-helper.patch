@@ -1,6 +1,6 @@
-From 346e3fdf8dc5935ddba28c1f6140cbe08c383ade Mon Sep 17 00:00:00 2001
+From 07ada411525748cdf26ad5fbccfdeb00d8e4a41f Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:06:03 +0800
+Date: Fri, 29 Oct 2021 21:02:39 +0800
 Subject: [PATCH 19/21] cpupower: move print_speed function into misc helper
 
 The print_speed can be as a common function, and expose it into misc
@@ -141,10 +141,10 @@ index f9895e31ff5a..b429454bf3ae 100644
  		cpufreq_put_available_frequencies(freqs);
  	}
 diff --git a/tools/power/cpupower/utils/helpers/helpers.h b/tools/power/cpupower/utils/helpers/helpers.h
-index 976c142ecfa0..0b0f6a55354e 100644
+index c03925bea655..fbbfa6047c83 100644
 --- a/tools/power/cpupower/utils/helpers/helpers.h
 +++ b/tools/power/cpupower/utils/helpers/helpers.h
-@@ -199,5 +199,6 @@ extern struct bitmask *offline_cpus;
+@@ -200,5 +200,6 @@ extern struct bitmask *offline_cpus;
  void get_cpustate(void);
  void print_online_cpus(void);
  void print_offline_cpus(void);
@@ -152,10 +152,10 @@ index 976c142ecfa0..0b0f6a55354e 100644
  
  #endif /* __CPUPOWERUTILS_HELPERS__ */
 diff --git a/tools/power/cpupower/utils/helpers/misc.c b/tools/power/cpupower/utils/helpers/misc.c
-index 99d1dc8917d0..730f670ab90d 100644
+index e0d3145434d3..d693c96cd09c 100644
 --- a/tools/power/cpupower/utils/helpers/misc.c
 +++ b/tools/power/cpupower/utils/helpers/misc.c
-@@ -166,3 +166,45 @@ void print_offline_cpus(void)
+@@ -164,3 +164,45 @@ void print_offline_cpus(void)
  		printf(_("cpupower set operation was not performed on them\n"));
  	}
  }
@@ -202,5 +202,5 @@ index 99d1dc8917d0..730f670ab90d 100644
 +	return;
 +}
 -- 
-2.33.0
+2.33.1
 

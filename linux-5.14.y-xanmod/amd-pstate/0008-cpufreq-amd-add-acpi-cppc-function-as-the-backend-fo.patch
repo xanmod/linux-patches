@@ -1,7 +1,7 @@
-From d6f927d64e079445f0481807b4dc65fe2bb653d1 Mon Sep 17 00:00:00 2001
+From 3d8d6e0bad0e27af4672a91ce14eedae68acaf2d Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:05:51 +0800
-Subject: [PATCH 07/21] cpufreq: amd: add acpi cppc function as the backend for
+Date: Fri, 29 Oct 2021 21:02:28 +0800
+Subject: [PATCH 08/21] cpufreq: amd: add acpi cppc function as the backend for
  legacy processors
 
 In some old Zen based processors, they are using the shared memory that
@@ -14,10 +14,10 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  1 file changed, 53 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index aa4610ad186e..c9bee7b1698a 100644
+index 55ff03f85608..d399938d6d85 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -75,6 +75,19 @@ static inline int pstate_enable(bool enable)
+@@ -73,6 +73,19 @@ static inline int pstate_enable(bool enable)
  	return wrmsrl_safe(MSR_AMD_CPPC_ENABLE, enable ? 1 : 0);
  }
  
@@ -37,7 +37,7 @@ index aa4610ad186e..c9bee7b1698a 100644
  DEFINE_STATIC_CALL(amd_pstate_enable, pstate_enable);
  
  static inline int amd_pstate_enable(bool enable)
-@@ -105,6 +118,24 @@ static int pstate_init_perf(struct amd_cpudata *cpudata)
+@@ -103,6 +116,24 @@ static int pstate_init_perf(struct amd_cpudata *cpudata)
  	return 0;
  }
  
@@ -62,7 +62,7 @@ index aa4610ad186e..c9bee7b1698a 100644
  DEFINE_STATIC_CALL(amd_pstate_init_perf, pstate_init_perf);
  
  static inline int amd_pstate_init_perf(struct amd_cpudata *cpudata)
-@@ -123,6 +154,19 @@ static void pstate_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
+@@ -120,6 +151,19 @@ static void pstate_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
  			      READ_ONCE(cpudata->cppc_req_cached));
  }
  
@@ -81,8 +81,8 @@ index aa4610ad186e..c9bee7b1698a 100644
 +
  DEFINE_STATIC_CALL(amd_pstate_update_perf, pstate_update_perf);
  
- static inline void
-@@ -368,7 +412,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
+ static inline void amd_pstate_update_perf(struct amd_cpudata *cpudata,
+@@ -346,7 +390,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
  	/* It will be updated by governor */
  	policy->cur = policy->cpuinfo.min_freq;
  
@@ -92,7 +92,7 @@ index aa4610ad186e..c9bee7b1698a 100644
  
  	ret = freq_qos_add_request(&policy->constraints, &cpudata->req[0],
  				   FREQ_QOS_MIN, policy->cpuinfo.min_freq);
-@@ -422,7 +467,6 @@ static struct cpufreq_driver amd_pstate_driver = {
+@@ -397,7 +442,6 @@ static struct cpufreq_driver amd_pstate_driver = {
  	.flags		= CPUFREQ_CONST_LOOPS | CPUFREQ_NEED_UPDATE_LIMITS,
  	.verify		= amd_pstate_verify,
  	.target		= amd_pstate_target,
@@ -100,7 +100,7 @@ index aa4610ad186e..c9bee7b1698a 100644
  	.init		= amd_pstate_cpu_init,
  	.exit		= amd_pstate_cpu_exit,
  	.name		= "amd-pstate",
-@@ -446,10 +490,14 @@ static int __init amd_pstate_init(void)
+@@ -421,10 +465,14 @@ static int __init amd_pstate_init(void)
  		return -EEXIST;
  
  	/* capability check */
@@ -119,5 +119,5 @@ index aa4610ad186e..c9bee7b1698a 100644
  
  	/* enable amd pstate feature */
 -- 
-2.33.0
+2.33.1
 

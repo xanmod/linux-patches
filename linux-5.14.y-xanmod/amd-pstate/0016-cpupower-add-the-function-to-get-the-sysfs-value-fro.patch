@@ -1,6 +1,6 @@
-From bc00ccb0565c2efce347623d075134720c23b162 Mon Sep 17 00:00:00 2001
+From 825995cb4a8ffb8fa3fad06cfc990d03af2ac9a2 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:06:00 +0800
+Date: Fri, 29 Oct 2021 21:02:36 +0800
 Subject: [PATCH 16/21] cpupower: add the function to get the sysfs value from
  specific table
 
@@ -84,5 +84,5 @@ index 95f4fd9e2656..107668c0c454 100644
  }
  #endif
 -- 
-2.33.0
+2.33.1
 

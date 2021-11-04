@@ -1,6 +1,6 @@
-From 8cfcf2885466d2d819f0f2ed846b169a7b739785 Mon Sep 17 00:00:00 2001
+From 3edf640f7737b2f807a20e7ccb944e548633b056 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:06:04 +0800
+Date: Fri, 29 Oct 2021 21:02:40 +0800
 Subject: [PATCH 20/21] cpupower: print amd-pstate information on cpupower
 
 amd-pstate kernel module is using the fine grain frequency instead of
@@ -9,10 +9,10 @@ printed in frequency-info.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- tools/power/cpupower/utils/cpufreq-info.c    |  9 ++++---
- tools/power/cpupower/utils/helpers/amd.c     | 25 ++++++++++++++++++++
- tools/power/cpupower/utils/helpers/helpers.h |  5 ++++
- 3 files changed, 36 insertions(+), 3 deletions(-)
+ tools/power/cpupower/utils/cpufreq-info.c    |  9 ++++--
+ tools/power/cpupower/utils/helpers/amd.c     | 32 ++++++++++++++++++++
+ tools/power/cpupower/utils/helpers/helpers.h |  5 +++
+ 3 files changed, 43 insertions(+), 3 deletions(-)
 
 diff --git a/tools/power/cpupower/utils/cpufreq-info.c b/tools/power/cpupower/utils/cpufreq-info.c
 index b429454bf3ae..f828f3c35a6f 100644
@@ -35,17 +35,24 @@ index b429454bf3ae..f828f3c35a6f 100644
  		if (ret)
  			return ret;
 diff --git a/tools/power/cpupower/utils/helpers/amd.c b/tools/power/cpupower/utils/helpers/amd.c
-index de68c14574c0..d68d052ee4cb 100644
+index 92b9fb631768..fa38d3da42ce 100644
 --- a/tools/power/cpupower/utils/helpers/amd.c
 +++ b/tools/power/cpupower/utils/helpers/amd.c
-@@ -202,5 +202,30 @@ void amd_pstate_boost_init(unsigned int cpu, int *support, int *active)
+@@ -200,5 +200,37 @@ void amd_pstate_boost_init(unsigned int cpu, int *support, int *active)
  	*active = cpuinfo_max == amd_pstate_max ? 1 : 0;
  }
  
 +void amd_pstate_show_perf_and_freq(unsigned int cpu, int no_rounding)
 +{
++	unsigned long cpuinfo_max, cpuinfo_min;
++
++	cpufreq_get_hardware_limits(cpu, &cpuinfo_min, &cpuinfo_max);
++
 +	printf(_("    AMD PSTATE Highest Performance: %lu. Maximum Frequency: "),
 +	       amd_pstate_get_data(cpu, AMD_PSTATE_HIGHEST_PERF));
++	/* If boost isn't active, the cpuinfo_max doesn't indicate real max
++	 * frequency. So we read it back from amd-pstate sysfs entry.
++	 */
 +	print_speed(amd_pstate_get_data(cpu, AMD_PSTATE_MAX_FREQ), no_rounding);
 +	printf(".\n");
 +
@@ -63,18 +70,18 @@ index de68c14574c0..d68d052ee4cb 100644
 +
 +	printf(_("    AMD PSTATE Lowest Performance: %lu. Lowest Frequency: "),
 +	       amd_pstate_get_data(cpu, AMD_PSTATE_LOWEST_PERF));
-+	print_speed(amd_pstate_get_data(cpu, AMD_PSTATE_MIN_FREQ), no_rounding);
++	print_speed(cpuinfo_min, no_rounding);
 +	printf(".\n");
 +}
 +
  /* AMD P-States Helper Functions ***************/
  #endif /* defined(__i386__) || defined(__x86_64__) */
 diff --git a/tools/power/cpupower/utils/helpers/helpers.h b/tools/power/cpupower/utils/helpers/helpers.h
-index 0b0f6a55354e..80755568afc4 100644
+index fbbfa6047c83..5f6862502dbf 100644
 --- a/tools/power/cpupower/utils/helpers/helpers.h
 +++ b/tools/power/cpupower/utils/helpers/helpers.h
-@@ -141,6 +141,8 @@ extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
- extern unsigned long cpupower_amd_pstate_enabled(void);
+@@ -142,6 +142,8 @@ extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
+ extern bool cpupower_amd_pstate_enabled(void);
  extern void amd_pstate_boost_init(unsigned int cpu,
  				  int *support, int *active);
 +extern void amd_pstate_show_perf_and_freq(unsigned int cpu,
@@ -82,7 +89,7 @@ index 0b0f6a55354e..80755568afc4 100644
  
  /* AMD P-States stuff **************************/
  
-@@ -181,6 +183,9 @@ static inline unsigned long cpupower_amd_pstate_enabled(void)
+@@ -182,6 +184,9 @@ static inline bool cpupower_amd_pstate_enabled(void)
  static void amd_pstate_boost_init(unsigned int cpu,
  				  int *support, int *active)
  { return; }
@@ -93,5 +100,5 @@ index 0b0f6a55354e..80755568afc4 100644
  /* cpuid and cpuinfo helpers  **************************/
  
 -- 
-2.33.0
+2.33.1
 

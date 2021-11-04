@@ -1,6 +1,6 @@
-From 5d5ce3426dd5843f586b18aae5f19e1bb05717a3 Mon Sep 17 00:00:00 2001
+From 01a4e7030d3b5cd8a1609acf77e00cd42d57deb1 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:05:58 +0800
+Date: Fri, 29 Oct 2021 21:02:34 +0800
 Subject: [PATCH 14/21] cpupower: add the function to check amd-pstate enabled
 
 The processor with amd-pstate function also supports legacy ACPI
@@ -12,68 +12,84 @@ module.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- tools/power/cpupower/utils/helpers/helpers.h |  9 +++++++++
- tools/power/cpupower/utils/helpers/misc.c    | 20 ++++++++++++++++++++
- 2 files changed, 29 insertions(+)
+ tools/power/cpupower/utils/helpers/helpers.h | 10 ++++++++++
+ tools/power/cpupower/utils/helpers/misc.c    | 18 ++++++++++++++++++
+ 2 files changed, 28 insertions(+)
 
 diff --git a/tools/power/cpupower/utils/helpers/helpers.h b/tools/power/cpupower/utils/helpers/helpers.h
-index b4813efdfb00..ae96efac759f 100644
+index b4813efdfb00..e03cc97297aa 100644
 --- a/tools/power/cpupower/utils/helpers/helpers.h
 +++ b/tools/power/cpupower/utils/helpers/helpers.h
-@@ -136,6 +136,12 @@ extern int decode_pstates(unsigned int cpu, int boost_states,
+@@ -11,6 +11,7 @@
+ 
+ #include <libintl.h>
+ #include <locale.h>
++#include <stdbool.h>
+ 
+ #include "helpers/bitmask.h"
+ #include <cpupower.h>
+@@ -136,6 +137,12 @@ extern int decode_pstates(unsigned int cpu, int boost_states,
  
  extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
  				     int *active, int * states);
 +
 +/* AMD P-States stuff **************************/
-+extern unsigned long cpupower_amd_pstate_enabled(void);
++extern bool cpupower_amd_pstate_enabled(void);
 +
 +/* AMD P-States stuff **************************/
 +
  /*
   * CPUID functions returning a single datum
   */
-@@ -168,6 +174,9 @@ static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
+@@ -168,6 +175,9 @@ static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
  					    int *active, int * states)
  { return -1; }
  
-+static inline unsigned long cpupower_amd_pstate_enabled(void)
-+{ return 0; }
++static inline bool cpupower_amd_pstate_enabled(void)
++{ return false; }
 +
  /* cpuid and cpuinfo helpers  **************************/
  
  static inline unsigned int cpuid_eax(unsigned int op) { return 0; };
 diff --git a/tools/power/cpupower/utils/helpers/misc.c b/tools/power/cpupower/utils/helpers/misc.c
-index fc6e34511721..39ff154ea9cf 100644
+index fc6e34511721..0c483cdefcc2 100644
 --- a/tools/power/cpupower/utils/helpers/misc.c
 +++ b/tools/power/cpupower/utils/helpers/misc.c
-@@ -83,6 +83,26 @@ int cpupower_intel_set_perf_bias(unsigned int cpu, unsigned int val)
+@@ -3,9 +3,11 @@
+ #include <stdio.h>
+ #include <errno.h>
+ #include <stdlib.h>
++#include <string.h>
+ 
+ #include "helpers/helpers.h"
+ #include "helpers/sysfs.h"
++#include "cpufreq.h"
+ 
+ #if defined(__i386__) || defined(__x86_64__)
+ 
+@@ -83,6 +85,22 @@ int cpupower_intel_set_perf_bias(unsigned int cpu, unsigned int val)
  	return 0;
  }
  
-+unsigned long cpupower_amd_pstate_enabled(void)
++bool cpupower_amd_pstate_enabled(void)
 +{
-+	char linebuf[MAX_LINE_LEN];
-+	char path[SYSFS_PATH_MAX];
-+	unsigned long val;
-+	char *endp;
++	char *driver = cpufreq_get_driver(0);
++	bool ret = false;
 +
-+	snprintf(path, sizeof(path),
-+		 PATH_TO_CPU "cpu0/cpufreq/is_amd_pstate_enabled");
++	if (!driver)
++		return ret;
 +
-+	if (cpupower_read_sysfs(path, linebuf, MAX_LINE_LEN) == 0)
-+		return 0;
++	if (!strcmp(driver, "amd-pstate"))
++		ret = true;
 +
-+	val = strtoul(linebuf, &endp, 0);
-+	if (endp == linebuf || errno == ERANGE)
-+		return 0;
++	cpufreq_put_driver(driver);
 +
-+	return val;
++	return ret;
 +}
 +
  #endif /* #if defined(__i386__) || defined(__x86_64__) */
  
  /* get_cpustate
 -- 
-2.33.0
+2.33.1
 

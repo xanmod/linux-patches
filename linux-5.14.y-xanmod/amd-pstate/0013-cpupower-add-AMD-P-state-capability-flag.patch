@@ -1,6 +1,6 @@
-From a328892ef6df18aa3b7d0cfca5aaf678f91e751d Mon Sep 17 00:00:00 2001
+From e4954fc809369a9ea65eee9e337222046f8feee4 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:05:57 +0800
+Date: Fri, 29 Oct 2021 21:02:33 +0800
 Subject: [PATCH 13/21] cpupower: add AMD P-state capability flag
 
 Add AMD P-state capability flag in cpupower to indicate AMD new P-state
@@ -24,5 +24,5 @@ index 33ffacee7fcb..b4813efdfb00 100644
  #define CPUPOWER_AMD_CPBDIS		0x02000000
  
 -- 
-2.33.0
+2.33.1
 

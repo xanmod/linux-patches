@@ -1,6 +1,6 @@
-From 78eb1dc6fa7d69267825633d8cfc4b0ddc6ff210 Mon Sep 17 00:00:00 2001
+From 0a09d2bb28dbf3071b9fde0258fdef9224a33154 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:05:45 +0800
+Date: Fri, 29 Oct 2021 21:02:21 +0800
 Subject: [PATCH 01/21] x86/cpufreatures: add AMD Collaborative Processor
  Performance Control feature flag
 
@@ -14,6 +14,7 @@ MSR Support" and another is "Shared Memory Support". The feature flag
 indicates the current processors with "Full MSR Support".
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
+Acked-by: Borislav Petkov <bp@suse.de>
 ---
  arch/x86/include/asm/cpufeatures.h | 1 +
  1 file changed, 1 insertion(+)
@@ -31,5 +32,5 @@ index d0ce5cfd3ac1..f23dc1abd485 100644
  /* Thermal and Power Management Leaf, CPUID level 0x00000006 (EAX), word 14 */
  #define X86_FEATURE_DTHERM		(14*32+ 0) /* Digital Thermal Sensor */
 -- 
-2.33.0
+2.33.1
 

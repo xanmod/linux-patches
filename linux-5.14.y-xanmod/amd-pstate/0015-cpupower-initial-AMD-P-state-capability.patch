@@ -1,6 +1,6 @@
-From 83dec7c39183e12619a17c4daf75da175874d798 Mon Sep 17 00:00:00 2001
+From 057c5bf1fb80976e85747d6f35c6e8c1d36289a2 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:05:59 +0800
+Date: Fri, 29 Oct 2021 21:02:35 +0800
 Subject: [PATCH 15/21] cpupower: initial AMD P-state capability
 
 If kernel starts the amd-pstate module, the cpupower will initial the
@@ -38,5 +38,5 @@ index 72eb43593180..2a6dc104e76b 100644
  
  	if (cpu_info->vendor == X86_VENDOR_INTEL) {
 -- 
-2.33.0
+2.33.1
 

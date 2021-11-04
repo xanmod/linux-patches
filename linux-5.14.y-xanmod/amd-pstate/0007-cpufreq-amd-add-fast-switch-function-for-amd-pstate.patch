@@ -1,12 +1,11 @@
-From 2751abcf141c046fa5c0bbacacca24b28babfe2f Mon Sep 17 00:00:00 2001
+From 4c6487d1519e3b2a86f832368d583109c980d88f Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:05:50 +0800
-Subject: [PATCH 06/21] cpufreq: amd: add fast switch function for amd-pstate
- module
+Date: Fri, 29 Oct 2021 21:02:27 +0800
+Subject: [PATCH 07/21] cpufreq: amd: add fast switch function for amd-pstate
 
-Introduce the fast switch function for amd-pstate module on the AMD
-processors which support the full MSR register control. It's able to
-decrease the lattency on interrupt context.
+Introduce the fast switch function for amd-pstate on the AMD processors
+which support the full MSR register control. It's able to decrease the
+lattency on interrupt context.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
@@ -14,10 +13,10 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  1 file changed, 38 insertions(+)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 693d796eae55..aa4610ad186e 100644
+index a400861c7fdc..55ff03f85608 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -195,6 +195,41 @@ static int amd_pstate_target(struct cpufreq_policy *policy,
+@@ -191,6 +191,41 @@ static int amd_pstate_target(struct cpufreq_policy *policy,
  	return 0;
  }
  
@@ -59,7 +58,7 @@ index 693d796eae55..aa4610ad186e 100644
  static int amd_get_min_freq(struct amd_cpudata *cpudata)
  {
  	struct cppc_perf_caps cppc_perf;
-@@ -333,6 +368,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
+@@ -311,6 +346,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
  	/* It will be updated by governor */
  	policy->cur = policy->cpuinfo.min_freq;
  
@@ -68,7 +67,7 @@ index 693d796eae55..aa4610ad186e 100644
  	ret = freq_qos_add_request(&policy->constraints, &cpudata->req[0],
  				   FREQ_QOS_MIN, policy->cpuinfo.min_freq);
  	if (ret < 0) {
-@@ -385,6 +422,7 @@ static struct cpufreq_driver amd_pstate_driver = {
+@@ -360,6 +397,7 @@ static struct cpufreq_driver amd_pstate_driver = {
  	.flags		= CPUFREQ_CONST_LOOPS | CPUFREQ_NEED_UPDATE_LIMITS,
  	.verify		= amd_pstate_verify,
  	.target		= amd_pstate_target,
@@ -77,5 +76,5 @@ index 693d796eae55..aa4610ad186e 100644
  	.exit		= amd_pstate_cpu_exit,
  	.name		= "amd-pstate",
 -- 
-2.33.0
+2.33.1
 

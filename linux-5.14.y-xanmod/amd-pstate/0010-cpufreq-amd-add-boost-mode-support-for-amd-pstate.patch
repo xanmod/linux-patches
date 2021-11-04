@@ -1,7 +1,7 @@
-From 8da4143b6fb97c357b6ac66ae513ca72f34c7339 Mon Sep 17 00:00:00 2001
+From 40af5f521261f78751def7242baaf55ab19d1eba Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Sun, 26 Sep 2021 17:05:53 +0800
-Subject: [PATCH 09/21] cpufreq: amd: add boost mode support for amd-pstate
+Date: Fri, 29 Oct 2021 21:02:30 +0800
+Subject: [PATCH 10/21] cpufreq: amd: add boost mode support for amd-pstate
 
 If the sbios supports the boost mode of amd-pstate, let's switch to
 boost enabled by default.
@@ -12,10 +12,10 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  1 file changed, 44 insertions(+)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 0c9f9c0c8928..847ba00e3351 100644
+index 6037590e82a6..9af27ac1f818 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -75,6 +75,8 @@ struct amd_cpudata {
+@@ -67,6 +67,8 @@ struct amd_cpudata {
  	u32	min_freq;
  	u32	nominal_freq;
  	u32	lowest_nonlinear_freq;
@@ -24,7 +24,7 @@ index 0c9f9c0c8928..847ba00e3351 100644
  };
  
  static inline int pstate_enable(bool enable)
-@@ -360,6 +362,45 @@ static int amd_get_lowest_nonlinear_freq(struct amd_cpudata *cpudata)
+@@ -349,6 +351,45 @@ static int amd_get_lowest_nonlinear_freq(struct amd_cpudata *cpudata)
  	return lowest_nonlinear_freq * 1000;
  }
  
@@ -67,10 +67,10 @@ index 0c9f9c0c8928..847ba00e3351 100644
 +	amd_pstate_driver.boost_enabled = true;
 +}
 +
- static int amd_pstate_init_freqs_in_cpudata(struct amd_cpudata *cpudata,
- 					    u32 max_freq, u32 min_freq,
- 					    u32 nominal_freq,
-@@ -450,6 +491,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
+ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
+ {
+ 	int min_freq, max_freq, nominal_freq, lowest_nonlinear_freq, ret;
+@@ -419,6 +460,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
  
  	policy->driver_data = cpudata;
  
@@ -78,8 +78,8 @@ index 0c9f9c0c8928..847ba00e3351 100644
 +
  	return 0;
  
- free_cpudata3:
-@@ -480,6 +523,7 @@ static struct cpufreq_driver amd_pstate_driver = {
+ 	freq_qos_remove_request(&cpudata->req[1]);
+@@ -448,6 +491,7 @@ static struct cpufreq_driver amd_pstate_driver = {
  	.target		= amd_pstate_target,
  	.init		= amd_pstate_cpu_init,
  	.exit		= amd_pstate_cpu_exit,
@@ -88,5 +88,5 @@ index 0c9f9c0c8928..847ba00e3351 100644
  };
  
 -- 
-2.33.0
+2.33.1
 
