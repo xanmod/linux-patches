@@ -1,7 +1,7 @@
-From fa32eded39afc9dd677e1faf611291e35c91fbb6 Mon Sep 17 00:00:00 2001
+From 96ccecfe179ace6ad016c8a5c4ee2f06f22cc02b Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
 Date: Fri, 18 Jun 2021 08:10:53 +0200
-Subject: [PATCH 08/13] char/lrng: add kernel crypto API PRNG extension
+Subject: [PATCH 10/15] char/lrng: add kernel crypto API PRNG extension
 
 Add runtime-pluggable support for all PRNGs that are accessible via
 the kernel crypto API, including hardware PRNGs. The PRNG is selected
@@ -39,6 +39,8 @@ Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
+Tested-by: Jirka Hladky <jhladky@redhat.com>
+Reviewed-by: Jirka Hladky <jhladky@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
  drivers/char/lrng/Kconfig      |  13 ++
@@ -48,10 +50,10 @@ Signed-off-by: Stephan Mueller <smueller@chronox.de>
  create mode 100644 drivers/char/lrng/lrng_kcapi.c
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index aa611363b97e..ffd2df43f2d4 100644
+index d06d0417b025..25684c54d6a9 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -225,6 +225,19 @@ config LRNG_DRBG
+@@ -278,6 +278,19 @@ config LRNG_DRBG
  	  Enable the SP800-90A DRBG support for the LRNG. Once the
  	  module is loaded, output from /dev/random, /dev/urandom,
  	  getrandom(2), or get_random_bytes_full is provided by a DRBG.
@@ -72,10 +74,10 @@ index aa611363b97e..ffd2df43f2d4 100644
  
  endif # LRNG
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index 7e5acb8cac3d..ad7c413cc0d9 100644
+index c00e15b6396e..85abeaa68136 100644
 --- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
-@@ -13,3 +13,4 @@ obj-$(CONFIG_SYSCTL)		+= lrng_proc.o
+@@ -14,3 +14,4 @@ obj-$(CONFIG_LRNG_CPU)		+= lrng_es_archrandom.o
  obj-$(CONFIG_LRNG_DRNG_SWITCH)	+= lrng_switch.o
  obj-$(CONFIG_LRNG_KCAPI_HASH)	+= lrng_kcapi_hash.o
  obj-$(CONFIG_LRNG_DRBG)		+= lrng_drbg.o
@@ -314,5 +316,5 @@ index 000000000000..b06449cb2365
 +MODULE_AUTHOR("Stephan Mueller <smueller@chronox.de>");
 +MODULE_DESCRIPTION("Linux Random Number Generator - kernel crypto API DRNG backend");
 -- 
-2.33.0
+2.33.1
 

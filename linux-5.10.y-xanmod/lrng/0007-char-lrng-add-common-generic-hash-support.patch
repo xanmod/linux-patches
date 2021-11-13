@@ -1,7 +1,7 @@
-From 91f7a7f9c14c5127f7f40db433ec79c30f480639 Mon Sep 17 00:00:00 2001
+From 4611e6280933d9206d1279fabc843911d33a0943 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
 Date: Fri, 18 Jun 2021 08:08:20 +0200
-Subject: [PATCH 05/13] char/lrng: add common generic hash support
+Subject: [PATCH 07/15] char/lrng: add common generic hash support
 
 The LRNG switchable DRNG support also allows the replacement of the hash
 implementation used as conditioning component. The common generic hash
@@ -36,6 +36,8 @@ CC: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 CC: Neil Horman <nhorman@redhat.com>
 Reviewed-by: Alexander Lobakin <alobakin@pm.me>
 Tested-by: Alexander Lobakin <alobakin@pm.me>
+Tested-by: Jirka Hladky <jhladky@redhat.com>
+Reviewed-by: Jirka Hladky <jhladky@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
  drivers/char/lrng/Kconfig           |   8 +++
@@ -47,10 +49,10 @@ Signed-off-by: Stephan Mueller <smueller@chronox.de>
  create mode 100644 drivers/char/lrng/lrng_kcapi_hash.h
 
 diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index c10a0c3f2015..ab17c45a356b 100644
+index 9fea73b72f88..531b34b9ae65 100644
 --- a/drivers/char/lrng/Kconfig
 +++ b/drivers/char/lrng/Kconfig
-@@ -209,4 +209,12 @@ menuconfig LRNG_DRNG_SWITCH
+@@ -262,4 +262,12 @@ menuconfig LRNG_DRNG_SWITCH
  	  accessible via the external interfaces. With this configuration
  	  option other DRNGs can be selected and loaded at runtime.
  
@@ -64,12 +66,12 @@ index c10a0c3f2015..ab17c45a356b 100644
 +
  endif # LRNG
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index dc3ef329b2c4..299715bb0ec2 100644
+index 2202aa78b63f..cb9b03bdfd00 100644
 --- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
-@@ -11,3 +11,4 @@ obj-y				+= lrng_es_mgr.o lrng_aux.o \
+@@ -12,3 +12,4 @@ obj-$(CONFIG_SYSCTL)		+= lrng_proc.o
  obj-$(CONFIG_NUMA)		+= lrng_numa.o
- obj-$(CONFIG_SYSCTL)		+= lrng_proc.o
+ obj-$(CONFIG_LRNG_CPU)		+= lrng_es_archrandom.o
  obj-$(CONFIG_LRNG_DRNG_SWITCH)	+= lrng_switch.o
 +obj-$(CONFIG_LRNG_KCAPI_HASH)	+= lrng_kcapi_hash.o
 diff --git a/drivers/char/lrng/lrng_kcapi_hash.c b/drivers/char/lrng/lrng_kcapi_hash.c
@@ -208,5 +210,5 @@ index 000000000000..2f94558d2dd6
 +
 +#endif /* _LRNG_KCAPI_HASH_H */
 -- 
-2.33.0
+2.33.1
 
