@@ -1,7 +1,7 @@
-From 09cafd7a37670c16bcf540267f2885153a183192 Mon Sep 17 00:00:00 2001
+From 93508e04b60ad9a86ed62e8ba1ca6055aab558e7 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
 Date: Wed, 16 Sep 2020 09:50:27 +0200
-Subject: [PATCH 09/13] crypto: move Jitter RNG header include dir
+Subject: [PATCH 11/15] crypto: move Jitter RNG header include dir
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -33,6 +33,8 @@ Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
+Tested-by: Jirka Hladky <jhladky@redhat.com>
+Reviewed-by: Jirka Hladky <jhladky@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
  crypto/jitterentropy-kcapi.c                        | 3 +--
@@ -73,5 +75,5 @@ similarity index 100%
 rename from crypto/jitterentropy.h
 rename to include/crypto/internal/jitterentropy.h
 -- 
-2.33.0
+2.33.1
 
