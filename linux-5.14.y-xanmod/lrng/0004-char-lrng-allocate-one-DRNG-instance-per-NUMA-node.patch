@@ -1,7 +1,7 @@
-From ce95b78abc618088f577f7f7957c2477bc0722de Mon Sep 17 00:00:00 2001
+From b566cccc819d2b5bc2cd3167bac3a9c4392523a7 Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
-Date: Mon, 2 Aug 2021 21:49:21 +0200
-Subject: [PATCH 02/13] char/lrng: allocate one DRNG instance per NUMA node
+Date: Tue, 28 Sep 2021 17:05:50 +0200
+Subject: [PATCH 04/15] char/lrng: allocate one DRNG instance per NUMA node
 
 In order to improve NUMA-locality when serving getrandom(2) requests,
 allocate one DRNG instance per node.
@@ -43,22 +43,23 @@ Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
+Tested-by: Jirka Hladky <jhladky@redhat.com>
+Reviewed-by: Jirka Hladky <jhladky@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- drivers/char/lrng/Makefile    |   2 +
+ drivers/char/lrng/Makefile    |   1 +
  drivers/char/lrng/lrng_numa.c | 122 ++++++++++++++++++++++++++++++++++
- 2 files changed, 124 insertions(+)
+ 2 files changed, 123 insertions(+)
  create mode 100644 drivers/char/lrng/lrng_numa.c
 
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index c26f932628d7..80b152059598 100644
+index d7df72a702e4..1e722e0967e0 100644
 --- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
-@@ -7,3 +7,5 @@ obj-y				+= lrng_es_mgr.o lrng_aux.o \
- 				   lrng_es_irq.o lrng_es_archrandom.o \
- 				   lrng_drng.o lrng_chacha20.o \
- 				   lrng_interfaces.o lrng_es_aux.o
-+
+@@ -9,3 +9,4 @@ obj-y				+= lrng_es_mgr.o lrng_aux.o \
+ 
+ obj-$(CONFIG_LRNG_IRQ)		+= lrng_es_irq.o
+ obj-$(CONFIG_SYSCTL)		+= lrng_proc.o
 +obj-$(CONFIG_NUMA)		+= lrng_numa.o
 diff --git a/drivers/char/lrng/lrng_numa.c b/drivers/char/lrng/lrng_numa.c
 new file mode 100644
@@ -189,5 +190,5 @@ index 000000000000..fbfb40a5fb8d
 +	schedule_work(&lrng_drngs_numa_alloc_work);
 +}
 -- 
-2.33.0
+2.33.1
 

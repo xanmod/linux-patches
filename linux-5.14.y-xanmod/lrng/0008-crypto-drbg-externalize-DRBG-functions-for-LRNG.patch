@@ -1,7 +1,7 @@
-From 9262ff706492c8f3314903ecd0cbc16656d9be75 Mon Sep 17 00:00:00 2001
+From 45bf8ec35b8da12a912e4773ed7ad961c6f0998b Mon Sep 17 00:00:00 2001
 From: Stephan Mueller <smueller@chronox.de>
 Date: Tue, 15 Sep 2020 22:17:43 +0200
-Subject: [PATCH 06/13] crypto: DRBG - externalize DRBG functions for LRNG
+Subject: [PATCH 08/15] crypto: drbg: externalize DRBG functions for LRNG
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -32,6 +32,8 @@ Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
+Tested-by: Jirka Hladky <jhladky@redhat.com>
+Reviewed-by: Jirka Hladky <jhladky@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
  crypto/drbg.c         | 16 ++++++++++------
@@ -143,5 +145,5 @@ index c4165126937e..71d53e028e6d 100644
 +
  #endif /* _DRBG_H */
 -- 
-2.33.0
+2.33.1
 
