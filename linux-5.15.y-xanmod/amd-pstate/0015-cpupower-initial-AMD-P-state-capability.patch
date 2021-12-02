@@ -1,7 +1,7 @@
-From e3564b4bc4a734092d5922f5d9aebc5bf6c58fe3 Mon Sep 17 00:00:00 2001
+From 22dc64c8334508f91e1d81d722071c362f322aca Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Fri, 29 Oct 2021 21:02:35 +0800
-Subject: [PATCH 15/21] cpupower: initial AMD P-state capability
+Date: Tue, 30 Nov 2021 20:36:34 +0800
+Subject: [PATCH 15/22] cpupower: initial AMD P-state capability
 
 If kernel starts the amd-pstate module, the cpupower will initial the
 capability flag as CPUPOWER_CAP_AMD_PSTATE. And once amd-pstate

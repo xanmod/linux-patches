@@ -1,21 +1,21 @@
-From 89afaad71cd955493553f6a9f2b0a29582da2df2 Mon Sep 17 00:00:00 2001
+From 1daf3cfcf628c16d96d1ff0437dd1ad8f8faf52d Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Fri, 29 Oct 2021 21:02:31 +0800
-Subject: [PATCH 11/21] cpufreq: amd: add amd-pstate frequencies attributes
+Date: Tue, 30 Nov 2021 20:36:30 +0800
+Subject: [PATCH 11/22] cpufreq: amd: add amd-pstate frequencies attributes
 
 Introduce sysfs attributes to get the different level processor
 frequencies.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- drivers/cpufreq/amd-pstate.c | 63 ++++++++++++++++++++++++++++++++++++
- 1 file changed, 63 insertions(+)
+ drivers/cpufreq/amd-pstate.c | 46 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 46 insertions(+)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 9af27ac1f818..8cf1e80f44e0 100644
+index c5d786af199d..d462d5a28e08 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -485,6 +485,68 @@ static int amd_pstate_cpu_exit(struct cpufreq_policy *policy)
+@@ -477,6 +477,51 @@ static int amd_pstate_cpu_exit(struct cpufreq_policy *policy)
  	return 0;
  }
  
@@ -40,21 +40,6 @@ index 9af27ac1f818..8cf1e80f44e0 100644
 +	return sprintf(&buf[0], "%u\n", max_freq);
 +}
 +
-+static ssize_t show_amd_pstate_nominal_freq(struct cpufreq_policy *policy,
-+					    char *buf)
-+{
-+	int nominal_freq;
-+	struct amd_cpudata *cpudata;
-+
-+	cpudata = policy->driver_data;
-+
-+	nominal_freq = amd_get_nominal_freq(cpudata);
-+	if (nominal_freq < 0)
-+		return nominal_freq;
-+
-+	return sprintf(&buf[0], "%u\n", nominal_freq);
-+}
-+
 +static ssize_t show_amd_pstate_lowest_nonlinear_freq(struct cpufreq_policy *policy,
 +						     char *buf)
 +{
@@ -71,12 +56,10 @@ index 9af27ac1f818..8cf1e80f44e0 100644
 +}
 +
 +cpufreq_freq_attr_ro(amd_pstate_max_freq);
-+cpufreq_freq_attr_ro(amd_pstate_nominal_freq);
 +cpufreq_freq_attr_ro(amd_pstate_lowest_nonlinear_freq);
 +
 +static struct freq_attr *amd_pstate_attr[] = {
 +	&amd_pstate_max_freq,
-+	&amd_pstate_nominal_freq,
 +	&amd_pstate_lowest_nonlinear_freq,
 +	NULL,
 +};
@@ -84,7 +67,7 @@ index 9af27ac1f818..8cf1e80f44e0 100644
  static struct cpufreq_driver amd_pstate_driver = {
  	.flags		= CPUFREQ_CONST_LOOPS | CPUFREQ_NEED_UPDATE_LIMITS,
  	.verify		= amd_pstate_verify,
-@@ -493,6 +555,7 @@ static struct cpufreq_driver amd_pstate_driver = {
+@@ -485,6 +530,7 @@ static struct cpufreq_driver amd_pstate_driver = {
  	.exit		= amd_pstate_cpu_exit,
  	.set_boost	= amd_pstate_set_boost,
  	.name		= "amd-pstate",

@@ -1,7 +1,7 @@
-From 404ee7bbee9791196e40cf57d3a2afb5b40ec4ac Mon Sep 17 00:00:00 2001
+From d8486a91a09dd79d3a63196fb46c062d602ec7c3 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Fri, 29 Oct 2021 21:02:24 +0800
-Subject: [PATCH 04/21] ACPI: CPPC: Check present CPUs for determining _CPC is
+Date: Tue, 30 Nov 2021 20:36:23 +0800
+Subject: [PATCH 04/22] ACPI: CPPC: Check present CPUs for determining _CPC is
  valid
 
 As this is a static check, it should be based upon what is currently
@@ -21,7 +21,7 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/acpi/cppc_acpi.c b/drivers/acpi/cppc_acpi.c
-index 444c7a4605ad..c9169c221209 100644
+index bcdad9d0658c..e260e14fb873 100644
 --- a/drivers/acpi/cppc_acpi.c
 +++ b/drivers/acpi/cppc_acpi.c
 @@ -411,7 +411,7 @@ bool acpi_cpc_valid(void)

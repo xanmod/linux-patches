@@ -1,7 +1,7 @@
-From 78cc2d6251062a869012621c2674e9e8d946faa1 Mon Sep 17 00:00:00 2001
+From 7081e3281cd2028cfd43bbbbe40f06bb60fa5cff Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Fri, 29 Oct 2021 21:02:34 +0800
-Subject: [PATCH 14/21] cpupower: add the function to check amd-pstate enabled
+Date: Tue, 30 Nov 2021 20:36:33 +0800
+Subject: [PATCH 14/22] cpupower: add the function to check amd-pstate enabled
 
 The processor with amd-pstate function also supports legacy ACPI
 hardware P-States feature as well. Once driver sets amd-pstate eanbled,

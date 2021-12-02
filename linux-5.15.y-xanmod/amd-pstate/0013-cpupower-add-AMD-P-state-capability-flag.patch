@@ -1,7 +1,7 @@
-From ed83ce65daf68b6baa619f43c2f609379a3f2464 Mon Sep 17 00:00:00 2001
+From 8abc8704abcf18410caef71457dd358a86cacff5 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Fri, 29 Oct 2021 21:02:33 +0800
-Subject: [PATCH 13/21] cpupower: add AMD P-state capability flag
+Date: Tue, 30 Nov 2021 20:36:32 +0800
+Subject: [PATCH 13/22] cpupower: add AMD P-state capability flag
 
 Add AMD P-state capability flag in cpupower to indicate AMD new P-state
 kernel module support on Ryzen processors.

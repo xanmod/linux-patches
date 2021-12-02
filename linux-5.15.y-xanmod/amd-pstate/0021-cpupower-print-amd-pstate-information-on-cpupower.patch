@@ -1,7 +1,7 @@
-From 8a0b060a2c1a4d6bbca2507108fced5d3ccb9493 Mon Sep 17 00:00:00 2001
+From 6d5c8a77c9a666b34d65eacf0d7e6ce58eca2cd5 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Fri, 29 Oct 2021 21:02:40 +0800
-Subject: [PATCH 20/21] cpupower: print amd-pstate information on cpupower
+Date: Tue, 30 Nov 2021 20:36:40 +0800
+Subject: [PATCH 21/22] cpupower: print amd-pstate information on cpupower
 
 amd-pstate kernel module is using the fine grain frequency instead of
 acpi hardware pstate. So the performance and frequency values should be
@@ -9,10 +9,10 @@ printed in frequency-info.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- tools/power/cpupower/utils/cpufreq-info.c    |  9 ++++--
- tools/power/cpupower/utils/helpers/amd.c     | 32 ++++++++++++++++++++
- tools/power/cpupower/utils/helpers/helpers.h |  5 +++
- 3 files changed, 43 insertions(+), 3 deletions(-)
+ tools/power/cpupower/utils/cpufreq-info.c    |  9 ++++---
+ tools/power/cpupower/utils/helpers/amd.c     | 28 ++++++++++++++++++++
+ tools/power/cpupower/utils/helpers/helpers.h |  5 ++++
+ 3 files changed, 39 insertions(+), 3 deletions(-)
 
 diff --git a/tools/power/cpupower/utils/cpufreq-info.c b/tools/power/cpupower/utils/cpufreq-info.c
 index b429454bf3ae..f828f3c35a6f 100644
@@ -35,19 +35,15 @@ index b429454bf3ae..f828f3c35a6f 100644
  		if (ret)
  			return ret;
 diff --git a/tools/power/cpupower/utils/helpers/amd.c b/tools/power/cpupower/utils/helpers/amd.c
-index 92b9fb631768..fa38d3da42ce 100644
+index bde6065cabf4..a1115891d76d 100644
 --- a/tools/power/cpupower/utils/helpers/amd.c
 +++ b/tools/power/cpupower/utils/helpers/amd.c
-@@ -200,5 +200,37 @@ void amd_pstate_boost_init(unsigned int cpu, int *support, int *active)
+@@ -193,5 +193,33 @@ void amd_pstate_boost_init(unsigned int cpu, int *support, int *active)
  	*active = cpuinfo_max == amd_pstate_max ? 1 : 0;
  }
  
 +void amd_pstate_show_perf_and_freq(unsigned int cpu, int no_rounding)
 +{
-+	unsigned long cpuinfo_max, cpuinfo_min;
-+
-+	cpufreq_get_hardware_limits(cpu, &cpuinfo_min, &cpuinfo_max);
-+
 +	printf(_("    AMD PSTATE Highest Performance: %lu. Maximum Frequency: "),
 +	       amd_pstate_get_data(cpu, AMD_PSTATE_HIGHEST_PERF));
 +	/* If boost isn't active, the cpuinfo_max doesn't indicate real max
@@ -57,20 +53,20 @@ index 92b9fb631768..fa38d3da42ce 100644
 +	printf(".\n");
 +
 +	printf(_("    AMD PSTATE Nominal Performance: %lu. Nominal Frequency: "),
-+	       amd_pstate_get_data(cpu, AMD_PSTATE_NOMINAL_PERF));
-+	print_speed(amd_pstate_get_data(cpu, AMD_PSTATE_NOMINAL_FREQ),
++	       acpi_cppc_get_data(cpu, NOMINAL_PERF));
++	print_speed(acpi_cppc_get_data(cpu, NOMINAL_FREQ) * 1000,
 +		    no_rounding);
 +	printf(".\n");
 +
 +	printf(_("    AMD PSTATE Lowest Non-linear Performance: %lu. Lowest Non-linear Frequency: "),
-+	       amd_pstate_get_data(cpu, AMD_PSTATE_LOWEST_NONLINEAR_PERF));
++	       acpi_cppc_get_data(cpu, LOWEST_NONLINEAR_PERF));
 +	print_speed(amd_pstate_get_data(cpu, AMD_PSTATE_LOWEST_NONLINEAR_FREQ),
 +		    no_rounding);
 +	printf(".\n");
 +
 +	printf(_("    AMD PSTATE Lowest Performance: %lu. Lowest Frequency: "),
-+	       amd_pstate_get_data(cpu, AMD_PSTATE_LOWEST_PERF));
-+	print_speed(cpuinfo_min, no_rounding);
++	       acpi_cppc_get_data(cpu, LOWEST_PERF));
++	print_speed(acpi_cppc_get_data(cpu, LOWEST_FREQ) * 1000, no_rounding);
 +	printf(".\n");
 +}
 +

@@ -1,7 +1,7 @@
-From 80157632333cd8166594ece9d84cd50169ca6661 Mon Sep 17 00:00:00 2001
+From e84ce1a183def824fe08c37acdcae066dca86358 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Fri, 29 Oct 2021 21:02:26 +0800
-Subject: [PATCH 06/21] cpufreq: amd: introduce a new amd pstate driver to
+Date: Tue, 30 Nov 2021 20:36:25 +0800
+Subject: [PATCH 06/22] cpufreq: amd: introduce a new amd pstate driver to
  support future processors
 
 amd-pstate is the AMD CPU performance scaling driver that introduces a
@@ -22,106 +22,30 @@ the hardware and SBIOS functionalities.
 
 There are two types of hardware implementations for amd-pstate: one is full
 MSR support and another is shared memory support. It can use
-X86_FEATURE_AMD_CPPC_EXT feature flag to distinguish the different types.
+X86_FEATURE_CPPC feature flag to distinguish the different types.
 
 Using the new AMD P-States method + kernel governors (*schedutil*,
 *ondemand*, ...) to manage the frequency update is the most appropriate
 bridge between AMD Zen based hardware processor and Linux kernel, the
-processor is able to ajust to the most efficiency frequency according to
+processor is able to adjust to the most efficiency frequency according to
 the kernel scheduler loading.
 
-Performance Per Watt (PPW) Caculation:
+Please check the detailed CPU feature and MSR register description in
+Processor Programming Reference (PPR) for AMD Family 19h Model 51h,
+Revision A1 Processors:
 
-The PPW caculation is referred by below paper:
-https://software.intel.com/content/dam/develop/external/us/en/documents/performance-per-what-paper.pdf
-
-Below formula is referred from below spec to measure the PPW:
-
-(F / t) / P = F * t / (t * E) = F / E,
-
-"F" is the number of frames per second.
-"P" is power measurd in watts.
-"E" is energy measured in joules.
-
-We use the RAPL interface with "perf" tool to get the energy data of the
-package power.
-
-The data comparsions between amd-pstate and acpi-freq module are tested on
-AMD Cezanne processor:
-
-1) TBench CPU benchmark:
-
-+---------------------------------------------------------------------+
-|                                                                     |
-|               TBench (Performance Per Watt)                         |
-|                                                    Higher is better |
-+-------------------+------------------------+------------------------+
-|                   |  Performance Per Watt  |  Performance Per Watt  |
-|   Kernel Module   |       (Schedutil)      |       (Ondemand)       |
-|                   |  Unit: MB / (s * J)    |  Unit: MB / (s * J)    |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|    acpi-cpufreq   |         3.022          |        2.969           |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|     amd-pstate    |         3.131          |        3.284           |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-
-2) Gitsource CPU benchmark:
-
-+---------------------------------------------------------------------+
-|                                                                     |
-|               Gitsource (Performance Per Watt)                      |
-|                                                    Higher is better |
-+-------------------+------------------------+------------------------+
-|                   |  Performance Per Watt  |  Performance Per Watt  |
-|   Kernel Module   |       (Schedutil)      |       (Ondemand)       |
-|                   |  Unit: 1 / (s * J)     |  Unit: 1 / (s * J)     |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|    acpi-cpufreq   |     3.42172E-07        |     2.74508E-07        |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|     amd-pstate    |     4.09141E-07        |     3.47610E-07        |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-
-3) Speedometer 2.0 CPU benchmark:
-
-+---------------------------------------------------------------------+
-|                                                                     |
-|               Speedometer 2.0 (Performance Per Watt)                |
-|                                                    Higher is better |
-+-------------------+------------------------+------------------------+
-|                   |  Performance Per Watt  |  Performance Per Watt  |
-|   Kernel Module   |       (Schedutil)      |       (Ondemand)       |
-|                   |  Unit: 1 / (s * J)     |  Unit: 1 / (s * J)     |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|    acpi-cpufreq   |      0.116111767       |      0.110321664       |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|     amd-pstate    |      0.115825281       |      0.122024299       |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-
-According to above average data, we can see this solution has shown better
-performance per watt scaling on mobile CPU benchmarks in most of cases.
+https://www.amd.com/system/files/TechDocs/56569-A1-PUB.zip
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
  drivers/cpufreq/Kconfig.x86  |  17 ++
  drivers/cpufreq/Makefile     |   1 +
- drivers/cpufreq/amd-pstate.c | 413 +++++++++++++++++++++++++++++++++++
- 3 files changed, 431 insertions(+)
+ drivers/cpufreq/amd-pstate.c | 398 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 416 insertions(+)
  create mode 100644 drivers/cpufreq/amd-pstate.c
 
 diff --git a/drivers/cpufreq/Kconfig.x86 b/drivers/cpufreq/Kconfig.x86
-index 92701a18bdd9..2e798b2c0bdb 100644
+index 92701a18bdd9..21837eb1698b 100644
 --- a/drivers/cpufreq/Kconfig.x86
 +++ b/drivers/cpufreq/Kconfig.x86
 @@ -34,6 +34,23 @@ config X86_PCC_CPUFREQ
@@ -129,14 +53,14 @@ index 92701a18bdd9..2e798b2c0bdb 100644
  	  If in doubt, say N.
  
 +config X86_AMD_PSTATE
-+	bool "AMD Processor P-State driver"
++	tristate "AMD Processor P-State driver"
 +	depends on X86
 +	select ACPI_PROCESSOR if ACPI
-+	select ACPI_CPPC_LIB if X86_64 && ACPI && SCHED_MC_PRIO
++	select ACPI_CPPC_LIB if X86_64 && ACPI
 +	select CPU_FREQ_GOV_SCHEDUTIL if SMP
 +	help
 +	  This driver adds a CPUFreq driver which utilizes a fine grain
-+	  processor performance freqency control range instead of legacy
++	  processor performance frequency control range instead of legacy
 +	  performance levels. This driver supports the AMD processors with
 +	  _CPC object in the SBIOS.
 +
@@ -162,28 +86,15 @@ index 48ee5859030c..c8d307010922 100644
  obj-$(CONFIG_X86_POWERNOW_K6)		+= powernow-k6.o
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
 new file mode 100644
-index 000000000000..a400861c7fdc
+index 000000000000..20ffbc30118f
 --- /dev/null
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -0,0 +1,413 @@
+@@ -0,0 +1,398 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
 +/*
 + * amd-pstate.c - AMD Processor P-state Frequency Driver
 + *
 + * Copyright (C) 2021 Advanced Micro Devices, Inc. All Rights Reserved.
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU General Public License
-+ * as published by the Free Software Foundation; either version 2
-+ * of the License, or (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License along with
-+ * this program; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 + *
 + * Author: Huang Rui <ray.huang@amd.com>
 + */
@@ -238,7 +149,7 @@ index 000000000000..a400861c7fdc
 +
 +static inline int pstate_enable(bool enable)
 +{
-+	return wrmsrl_safe(MSR_AMD_CPPC_ENABLE, enable ? 1 : 0);
++	return wrmsrl_safe(MSR_AMD_CPPC_ENABLE, enable);
 +}
 +
 +DEFINE_STATIC_CALL(amd_pstate_enable, pstate_enable);
@@ -335,25 +246,24 @@ index 000000000000..a400861c7fdc
 +{
 +	struct cpufreq_freqs freqs;
 +	struct amd_cpudata *cpudata = policy->driver_data;
-+	unsigned long amd_max_perf, amd_min_perf, amd_des_perf,
-+		      amd_cap_perf;
++	unsigned long max_perf, min_perf, des_perf, cap_perf;
 +
 +	if (!cpudata->max_freq)
 +		return -ENODEV;
 +
-+	amd_cap_perf = READ_ONCE(cpudata->highest_perf);
-+	amd_min_perf = READ_ONCE(cpudata->lowest_nonlinear_perf);
-+	amd_max_perf = amd_cap_perf;
++	cap_perf = READ_ONCE(cpudata->highest_perf);
++	min_perf = READ_ONCE(cpudata->lowest_nonlinear_perf);
++	max_perf = cap_perf;
 +
 +	freqs.old = policy->cur;
 +	freqs.new = target_freq;
 +
-+	amd_des_perf = DIV_ROUND_CLOSEST(target_freq * amd_cap_perf,
-+					 cpudata->max_freq);
++	des_perf = DIV_ROUND_CLOSEST(target_freq * cap_perf,
++				     cpudata->max_freq);
 +
 +	cpufreq_freq_transition_begin(policy, &freqs);
-+	amd_pstate_update(cpudata, amd_min_perf, amd_des_perf,
-+			  amd_max_perf, false);
++	amd_pstate_update(cpudata, min_perf, des_perf,
++			  max_perf, false);
 +	cpufreq_freq_transition_end(policy, &freqs, false);
 +
 +	return 0;
@@ -397,16 +307,13 @@ index 000000000000..a400861c7fdc
 +static int amd_get_nominal_freq(struct amd_cpudata *cpudata)
 +{
 +	struct cppc_perf_caps cppc_perf;
-+	u32 nominal_freq;
 +
 +	int ret = cppc_get_perf_caps(cpudata->cpu, &cppc_perf);
 +	if (ret)
 +		return ret;
 +
-+	nominal_freq = cppc_perf.nominal_freq;
-+
 +	/* Switch to khz */
-+	return nominal_freq * 1000;
++	return cppc_perf.nominal_freq * 1000;
 +}
 +
 +static int amd_get_lowest_nonlinear_freq(struct amd_cpudata *cpudata)
@@ -425,8 +332,8 @@ index 000000000000..a400861c7fdc
 +
 +	lowest_nonlinear_perf = cppc_perf.lowest_nonlinear_perf;
 +
-+	lowest_nonlinear_ratio = div_u64(lowest_nonlinear_perf <<
-+					 SCHED_CAPACITY_SHIFT, nominal_perf);
++	lowest_nonlinear_ratio = div_u64(lowest_nonlinear_perf << SCHED_CAPACITY_SHIFT,
++					 nominal_perf);
 +
 +	lowest_nonlinear_freq = nominal_freq * lowest_nonlinear_ratio >> SCHED_CAPACITY_SHIFT;
 +
@@ -437,7 +344,6 @@ index 000000000000..a400861c7fdc
 +static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
 +{
 +	int min_freq, max_freq, nominal_freq, lowest_nonlinear_freq, ret;
-+	unsigned int cpu = policy->cpu;
 +	struct device *dev;
 +	struct amd_cpudata *cpudata;
 +
@@ -449,7 +355,7 @@ index 000000000000..a400861c7fdc
 +	if (!cpudata)
 +		return -ENOMEM;
 +
-+	cpudata->cpu = cpu;
++	cpudata->cpu = policy->cpu;
 +
 +	ret = amd_pstate_init_perf(cpudata);
 +	if (ret)
@@ -503,7 +409,6 @@ index 000000000000..a400861c7fdc
 +
 +	return 0;
 +
-+	freq_qos_remove_request(&cpudata->req[1]);
 +free_cpudata2:
 +	freq_qos_remove_request(&cpudata->req[0]);
 +free_cpudata1:
@@ -541,8 +446,7 @@ index 000000000000..a400861c7fdc
 +		return -ENODEV;
 +
 +	if (!acpi_cpc_valid()) {
-+		pr_debug("%s, the _CPC object is not present in SBIOS\n",
-+			 __func__);
++		pr_debug("the _CPC object is not present in SBIOS\n");
 +		return -ENODEV;
 +	}
 +
@@ -551,30 +455,35 @@ index 000000000000..a400861c7fdc
 +		return -EEXIST;
 +
 +	/* capability check */
-+	if (!boot_cpu_has(X86_FEATURE_AMD_CPPC)) {
-+		pr_debug("%s, AMD CPPC MSR based functionality is not supported\n",
-+			 __func__);
++	if (!boot_cpu_has(X86_FEATURE_CPPC)) {
++		pr_debug("AMD CPPC MSR based functionality is not supported\n");
 +		return -ENODEV;
 +	}
 +
 +	/* enable amd pstate feature */
 +	ret = amd_pstate_enable(true);
 +	if (ret) {
-+		pr_err("%s, failed to enable amd-pstate with return %d\n",
-+		       __func__, ret);
++		pr_err("failed to enable amd-pstate with return %d\n", ret);
 +		return ret;
 +	}
 +
 +	ret = cpufreq_register_driver(&amd_pstate_driver);
-+	if (ret) {
-+		pr_err("%s, return %d\n", __func__, ret);
-+		return ret;
-+	}
++	if (ret)
++		pr_err("failed to register amd_pstate_driver with return %d\n",
++		       ret);
 +
-+	return 0;
++	return ret;
 +}
 +
-+device_initcall(amd_pstate_init);
++static void __exit amd_pstate_exit(void)
++{
++	cpufreq_unregister_driver(&amd_pstate_driver);
++
++	amd_pstate_enable(false);
++}
++
++module_init(amd_pstate_init);
++module_exit(amd_pstate_exit);
 +
 +MODULE_AUTHOR("Huang Rui <ray.huang@amd.com>");
 +MODULE_DESCRIPTION("AMD Processor P-state Frequency Driver");

@@ -1,7 +1,7 @@
-From 4a813ec934a5db55b7506f2ae60da81137e01a96 Mon Sep 17 00:00:00 2001
+From 90e15c0cd007910c46dd58349c171bbe2d4fbcb3 Mon Sep 17 00:00:00 2001
 From: Jinzhou Su <Jinzhou.Su@amd.com>
-Date: Fri, 29 Oct 2021 21:02:25 +0800
-Subject: [PATCH 05/21] ACPI: CPPC: add cppc enable register function
+Date: Tue, 30 Nov 2021 20:36:24 +0800
+Subject: [PATCH 05/22] ACPI: CPPC: add cppc enable register function
 
 Add a new function to enable CPPC feature. This function
 will write Continuous Performance Control package
@@ -25,16 +25,16 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  2 files changed, 50 insertions(+)
 
 diff --git a/drivers/acpi/cppc_acpi.c b/drivers/acpi/cppc_acpi.c
-index c9169c221209..2d2297ef5bf9 100644
+index e260e14fb873..6088439d3e10 100644
 --- a/drivers/acpi/cppc_acpi.c
 +++ b/drivers/acpi/cppc_acpi.c
-@@ -1275,6 +1275,51 @@ int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
+@@ -1282,6 +1282,51 @@ int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
  }
  EXPORT_SYMBOL_GPL(cppc_get_perf_ctrs);
  
 +/**
 + * cppc_set_enable - Set to enable CPPC on the processor by writing the
-+ * Continuous Performance Control package EnableRegister feild.
++ * Continuous Performance Control package EnableRegister field.
 + * @cpu: CPU for which to enable CPPC register.
 + * @enable: 0 - disable, 1 - enable CPPC feature on the processor.
 + *

@@ -1,7 +1,7 @@
-From 0657f4569fad367a1586efdb270ab7769ad62ee3 Mon Sep 17 00:00:00 2001
+From 689cd03299022e7ec9117844837d34f2cca14a06 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Fri, 29 Oct 2021 21:02:39 +0800
-Subject: [PATCH 19/21] cpupower: move print_speed function into misc helper
+Date: Tue, 30 Nov 2021 20:36:39 +0800
+Subject: [PATCH 20/22] cpupower: move print_speed function into misc helper
 
 The print_speed can be as a common function, and expose it into misc
 helper header. Then it can be used on other helper files as well.

@@ -1,7 +1,7 @@
-From d396d0c88097f6efc1af536310f2b9006d0424e0 Mon Sep 17 00:00:00 2001
+From 20cca474501ee20aa0c35df6bdbaf66c748c8959 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Fri, 29 Oct 2021 21:02:30 +0800
-Subject: [PATCH 10/21] cpufreq: amd: add boost mode support for amd-pstate
+Date: Tue, 30 Nov 2021 20:36:29 +0800
+Subject: [PATCH 10/22] cpufreq: amd: add boost mode support for amd-pstate
 
 If the sbios supports the boost mode of amd-pstate, let's switch to
 boost enabled by default.
@@ -12,7 +12,7 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  1 file changed, 44 insertions(+)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 6037590e82a6..9af27ac1f818 100644
+index 72a4e2258fe7..c5d786af199d 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
 @@ -67,6 +67,8 @@ struct amd_cpudata {
@@ -24,7 +24,7 @@ index 6037590e82a6..9af27ac1f818 100644
  };
  
  static inline int pstate_enable(bool enable)
-@@ -349,6 +351,45 @@ static int amd_get_lowest_nonlinear_freq(struct amd_cpudata *cpudata)
+@@ -343,6 +345,45 @@ static int amd_get_lowest_nonlinear_freq(struct amd_cpudata *cpudata)
  	return lowest_nonlinear_freq * 1000;
  }
  
@@ -70,7 +70,7 @@ index 6037590e82a6..9af27ac1f818 100644
  static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
  {
  	int min_freq, max_freq, nominal_freq, lowest_nonlinear_freq, ret;
-@@ -419,6 +460,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
+@@ -412,6 +453,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
  
  	policy->driver_data = cpudata;
  
@@ -78,8 +78,8 @@ index 6037590e82a6..9af27ac1f818 100644
 +
  	return 0;
  
- 	freq_qos_remove_request(&cpudata->req[1]);
-@@ -448,6 +491,7 @@ static struct cpufreq_driver amd_pstate_driver = {
+ free_cpudata2:
+@@ -440,6 +483,7 @@ static struct cpufreq_driver amd_pstate_driver = {
  	.target		= amd_pstate_target,
  	.init		= amd_pstate_cpu_init,
  	.exit		= amd_pstate_cpu_exit,

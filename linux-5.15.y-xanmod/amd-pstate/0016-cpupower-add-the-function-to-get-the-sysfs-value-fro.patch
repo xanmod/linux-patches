@@ -1,7 +1,7 @@
-From a929cd0138283597dfba8903d58be4f672ad8d60 Mon Sep 17 00:00:00 2001
+From 8e85a5ed37a9c267e544f704a105c59830ed39d4 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Fri, 29 Oct 2021 21:02:36 +0800
-Subject: [PATCH 16/21] cpupower: add the function to get the sysfs value from
+Date: Tue, 30 Nov 2021 20:36:35 +0800
+Subject: [PATCH 16/22] cpupower: add the function to get the sysfs value from
  specific table
 
 Expose the helper into cpufreq header, then cpufreq driver can use this
@@ -14,7 +14,7 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  2 files changed, 27 insertions(+), 6 deletions(-)
 
 diff --git a/tools/power/cpupower/lib/cpufreq.c b/tools/power/cpupower/lib/cpufreq.c
-index c3b56db8b921..02719cc400a1 100644
+index c3b56db8b921..c011bca27041 100644
 --- a/tools/power/cpupower/lib/cpufreq.c
 +++ b/tools/power/cpupower/lib/cpufreq.c
 @@ -83,20 +83,21 @@ static const char *cpufreq_value_files[MAX_CPUFREQ_VALUE_READ_FILES] = {
@@ -35,7 +35,7 @@ index c3b56db8b921..02719cc400a1 100644
  	char *endp;
  
 -	if (which >= MAX_CPUFREQ_VALUE_READ_FILES)
-+	if (!table && !table[index] && index >= size)
++	if (!table || index >= size || !table[index])
  		return 0;
  
 -	len = sysfs_cpufreq_read_file(cpu, cpufreq_value_files[which],

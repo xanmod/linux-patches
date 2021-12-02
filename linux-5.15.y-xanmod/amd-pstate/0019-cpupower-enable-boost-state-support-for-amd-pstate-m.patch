@@ -1,7 +1,7 @@
-From aeea0f426f049b13b1333e36b4a2c817d5300494 Mon Sep 17 00:00:00 2001
+From f2926df45a1d8e6165200d2161cb3e0d4f46d3ad Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Fri, 29 Oct 2021 21:02:38 +0800
-Subject: [PATCH 18/21] cpupower: enable boost state support for amd-pstate
+Date: Tue, 30 Nov 2021 20:36:38 +0800
+Subject: [PATCH 19/22] cpupower: enable boost state support for amd-pstate
  module
 
 The legacy ACPI hardware P-States function has 3 P-States on ACPI table,
@@ -29,10 +29,10 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  3 files changed, 25 insertions(+)
 
 diff --git a/tools/power/cpupower/utils/helpers/amd.c b/tools/power/cpupower/utils/helpers/amd.c
-index f233a6ab75ac..92b9fb631768 100644
+index 14c658daba4b..bde6065cabf4 100644
 --- a/tools/power/cpupower/utils/helpers/amd.c
 +++ b/tools/power/cpupower/utils/helpers/amd.c
-@@ -182,5 +182,23 @@ static unsigned long amd_pstate_get_data(unsigned int cpu,
+@@ -175,5 +175,23 @@ static unsigned long amd_pstate_get_data(unsigned int cpu,
  						  MAX_AMD_PSTATE_VALUE_READ_FILES);
  }
  
@@ -42,7 +42,7 @@ index f233a6ab75ac..92b9fb631768 100644
 +		      cpuinfo_max, amd_pstate_max;
 +
 +	highest_perf = amd_pstate_get_data(cpu, AMD_PSTATE_HIGHEST_PERF);
-+	nominal_perf = amd_pstate_get_data(cpu, AMD_PSTATE_NOMINAL_PERF);
++	nominal_perf = acpi_cppc_get_data(cpu, NOMINAL_PERF);
 +
 +	*support = highest_perf > nominal_perf ? 1 : 0;
 +	if (!(*support))

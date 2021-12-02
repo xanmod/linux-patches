@@ -1,7 +1,7 @@
-From 65de6ab35252defe2b94935e1c0ae70db37550f0 Mon Sep 17 00:00:00 2001
+From f55609330b1834ec0a78572270a496a4c2970f30 Mon Sep 17 00:00:00 2001
 From: Steven Noonan <steven@valvesoftware.com>
-Date: Fri, 29 Oct 2021 21:02:23 +0800
-Subject: [PATCH 03/21] ACPI: CPPC: implement support for SystemIO registers
+Date: Tue, 30 Nov 2021 20:36:22 +0800
+Subject: [PATCH 03/22] ACPI: CPPC: implement support for SystemIO registers
 
 According to the ACPI v6.2 (and later) specification, SystemIO can be
 used for _CPC registers. This teaches cppc_acpi how to handle such
@@ -18,7 +18,7 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  1 file changed, 43 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/acpi/cppc_acpi.c b/drivers/acpi/cppc_acpi.c
-index bd482108310c..444c7a4605ad 100644
+index 3fbb17ecce2d..bcdad9d0658c 100644
 --- a/drivers/acpi/cppc_acpi.c
 +++ b/drivers/acpi/cppc_acpi.c
 @@ -759,9 +759,24 @@ int acpi_cppc_processor_probe(struct acpi_processor *pr)
