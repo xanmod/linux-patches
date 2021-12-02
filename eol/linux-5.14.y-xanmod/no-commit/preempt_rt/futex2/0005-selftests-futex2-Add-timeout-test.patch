@@ -1,0 +1,77 @@
+From ea552645c476f146e51966b7b429185ce90b79b6 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@collabora.com>
+Date: Fri, 5 Feb 2021 10:34:01 -0300
+Subject: [PATCH 05/11] selftests: futex2: Add timeout test
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Adapt existing futex wait timeout file to test the same mechanism for
+futex2. futex2 accepts only absolute 64bit timers, but supports both
+monotonic and realtime clocks.
+
+Signed-off-by: André Almeida <andrealmeid@collabora.com>
+---
+ .../futex/functional/futex_wait_timeout.c     | 24 +++++++++++++++++--
+ 1 file changed, 22 insertions(+), 2 deletions(-)
+
+diff --git a/tools/testing/selftests/futex/functional/futex_wait_timeout.c b/tools/testing/selftests/futex/functional/futex_wait_timeout.c
+index 1f8f6daaf1e7..d20f54745c2e 100644
+--- a/tools/testing/selftests/futex/functional/futex_wait_timeout.c
++++ b/tools/testing/selftests/futex/functional/futex_wait_timeout.c
+@@ -17,6 +17,14 @@
+ 
+ #include <pthread.h>
+ #include "futextest.h"
++
++#include <errno.h>
++#include <getopt.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <time.h>
++#include "futex2test.h"
+ #include "logging.h"
+ 
+ #define TEST_NAME "futex-wait-timeout"
+@@ -92,8 +100,8 @@ static int futex_get_abs_timeout(clockid_t clockid, struct timespec *to,
+ int main(int argc, char *argv[])
+ {
+ 	futex_t f1 = FUTEX_INITIALIZER;
++	struct timespec to = {.tv_sec = 0, .tv_nsec = timeout_ns};
+ 	int res, ret = RET_PASS;
+-	struct timespec to;
+ 	pthread_t thread;
+ 	int c;
+ 
+@@ -118,7 +126,7 @@ int main(int argc, char *argv[])
+ 	}
+ 
+ 	ksft_print_header();
+-	ksft_set_plan(7);
++	ksft_set_plan(9);
+ 	ksft_print_msg("%s: Block on a futex and wait for timeout\n",
+ 	       basename(argv[0]));
+ 	ksft_print_msg("\tArguments: timeout=%ldns\n", timeout_ns);
+@@ -175,6 +183,18 @@ int main(int argc, char *argv[])
+ 	res = futex_lock_pi(&futex_pi, NULL, 0, FUTEX_CLOCK_REALTIME);
+ 	test_timeout(res, &ret, "futex_lock_pi invalid timeout flag", ENOSYS);
+ 
++	/* setting absolute monotonic timeout for futex2 */
++	if (futex_get_abs_timeout(CLOCK_MONOTONIC, &to, timeout_ns))
++		return RET_FAIL;
++	res = futex2_wait(&f1, f1, FUTEX_32, &to);
++	test_timeout(res, &ret, "futex2_wait monotonic", ETIMEDOUT);
++
++	/* setting absolute realtime timeout for futex2 */
++	if (futex_get_abs_timeout(CLOCK_REALTIME, &to, timeout_ns))
++		return RET_FAIL;
++	res = futex2_wait(&f1, f1, FUTEX_32 | FUTEX_CLOCK_REALTIME, &to);
++	test_timeout(res, &ret, "futex2_wait realtime", ETIMEDOUT);
++
+ 	ksft_print_cnts();
+ 	return ret;
+ }
+-- 
+2.33.0
+
