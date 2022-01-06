@@ -1,0 +1,34 @@
+From 5b12e612ecfe6e03b4f9fd5d466fd823ff42d768 Mon Sep 17 00:00:00 2001
+From: Huang Rui <ray.huang@amd.com>
+Date: Mon, 20 Dec 2021 00:35:28 +0800
+Subject: [PATCH 14/14] MAINTAINERS: add AMD P-State driver maintainer entry
+
+I will continue to add new feature and processor support, optimize the
+performance, and handle the issues for AMD P-State driver.
+
+Signed-off-by: Huang Rui <ray.huang@amd.com>
+---
+ MAINTAINERS | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 9f05d2ead58a..f1ef72bd4c6b 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -985,6 +985,13 @@ S:	Supported
+ T:	git https://gitlab.freedesktop.org/agd5f/linux.git
+ F:	drivers/gpu/drm/amd/pm/
+ 
++AMD PSTATE DRIVER
++M:	Huang Rui <ray.huang@amd.com>
++L:	linux-pm@vger.kernel.org
++S:	Supported
++F:	Documentation/admin-guide/pm/amd-pstate.rst
++F:	drivers/cpufreq/amd-pstate*
++
+ AMD PTDMA DRIVER
+ M:	Sanjay R Mehta <sanju.mehta@amd.com>
+ L:	dmaengine@vger.kernel.org
+-- 
+2.33.1
+

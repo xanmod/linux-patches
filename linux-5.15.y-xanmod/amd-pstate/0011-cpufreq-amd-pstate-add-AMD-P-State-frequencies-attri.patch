@@ -1,27 +1,29 @@
-From 1daf3cfcf628c16d96d1ff0437dd1ad8f8faf52d Mon Sep 17 00:00:00 2001
+From bff21d16aea05fd60138d802a9674b45b3296cc3 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Tue, 30 Nov 2021 20:36:30 +0800
-Subject: [PATCH 11/22] cpufreq: amd: add amd-pstate frequencies attributes
+Date: Mon, 20 Dec 2021 00:35:25 +0800
+Subject: [PATCH 11/14] cpufreq: amd-pstate: add AMD P-State frequencies
+ attributes
 
 Introduce sysfs attributes to get the different level processor
 frequencies.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- drivers/cpufreq/amd-pstate.c | 46 ++++++++++++++++++++++++++++++++++++
- 1 file changed, 46 insertions(+)
+ drivers/cpufreq/amd-pstate.c | 47 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 47 insertions(+)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index c5d786af199d..d462d5a28e08 100644
+index 4ff4fb7c3de6..dd8c0e894532 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -477,6 +477,51 @@ static int amd_pstate_cpu_exit(struct cpufreq_policy *policy)
+@@ -509,6 +509,52 @@ static int amd_pstate_cpu_exit(struct cpufreq_policy *policy)
  	return 0;
  }
  
 +/* Sysfs attributes */
 +
-+/* This frequency is to indicate the maximum hardware frequency.
++/*
++ * This frequency is to indicate the maximum hardware frequency.
 + * If boost is not active but supported, the frequency will be larger than the
 + * one in cpuinfo.
 + */
@@ -67,7 +69,7 @@ index c5d786af199d..d462d5a28e08 100644
  static struct cpufreq_driver amd_pstate_driver = {
  	.flags		= CPUFREQ_CONST_LOOPS | CPUFREQ_NEED_UPDATE_LIMITS,
  	.verify		= amd_pstate_verify,
-@@ -485,6 +530,7 @@ static struct cpufreq_driver amd_pstate_driver = {
+@@ -517,6 +563,7 @@ static struct cpufreq_driver amd_pstate_driver = {
  	.exit		= amd_pstate_cpu_exit,
  	.set_boost	= amd_pstate_set_boost,
  	.name		= "amd-pstate",

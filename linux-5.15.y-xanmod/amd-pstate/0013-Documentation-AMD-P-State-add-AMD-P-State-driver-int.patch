@@ -1,10 +1,10 @@
-From 9cb55692ff169699b78f31468cf8a976e627ce81 Mon Sep 17 00:00:00 2001
+From 96ca183a9d49167b32ce542d140471891034ee73 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Tue, 30 Nov 2021 20:36:41 +0800
-Subject: [PATCH 22/22] Documentation: amd-pstate: add amd-pstate driver
+Date: Mon, 20 Dec 2021 00:35:27 +0800
+Subject: [PATCH 13/14] Documentation: AMD P-State: add AMD P-State driver
  introduction
 
-Introduce the amd-pstate driver design and implementation.
+Introduce the AMD P-State driver design and implementation.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---

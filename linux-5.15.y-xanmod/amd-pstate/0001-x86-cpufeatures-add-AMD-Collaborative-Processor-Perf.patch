@@ -1,14 +1,14 @@
-From 62612b868251ff5370ac9d8db452a60e88c5a907 Mon Sep 17 00:00:00 2001
+From 7cc8552c0495cee643de674bf4edcc20c7b77bf7 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Tue, 30 Nov 2021 20:36:20 +0800
-Subject: [PATCH 01/22] x86/cpufeatures: add AMD Collaborative Processor
+Date: Mon, 20 Dec 2021 00:35:15 +0800
+Subject: [PATCH 01/14] x86/cpufeatures: add AMD Collaborative Processor
  Performance Control feature flag
 
 Add Collaborative Processor Performance Control feature flag for AMD
 processors.
 
-This feature flag will be used on the following amd-pstate driver. The
-amd-pstate driver has two approaches to implement the frequency control
+This feature flag will be used on the following AMD P-State driver. The
+AMD P-State driver has two approaches to implement the frequency control
 behavior. That depends on the CPU hardware implementation. One is "Full
 MSR Support" and another is "Shared Memory Support". The feature flag
 indicates the current processors with "Full MSR Support".

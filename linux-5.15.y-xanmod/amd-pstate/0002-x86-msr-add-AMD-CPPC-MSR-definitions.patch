@@ -1,7 +1,7 @@
-From 7abdbaa3ad7a1421add4fc59763eecc2e0626760 Mon Sep 17 00:00:00 2001
+From e0be18a9f8ad78346eccac615b8e188fb26c71a4 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Tue, 30 Nov 2021 20:36:21 +0800
-Subject: [PATCH 02/22] x86/msr: add AMD CPPC MSR definitions
+Date: Mon, 20 Dec 2021 00:35:16 +0800
+Subject: [PATCH 02/14] x86/msr: add AMD CPPC MSR definitions
 
 AMD CPPC (Collaborative Processor Performance Control) function uses MSR
 registers to manage the performance hints. So add the MSR register macro

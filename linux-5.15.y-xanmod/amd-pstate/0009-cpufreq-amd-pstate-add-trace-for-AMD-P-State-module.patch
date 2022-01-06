@@ -1,7 +1,7 @@
-From 8da017f256fd569348ed56f5b3656860f95b53af Mon Sep 17 00:00:00 2001
+From 20401c2536ffd4555212497242ebe2bbece609d3 Mon Sep 17 00:00:00 2001
 From: Huang Rui <ray.huang@amd.com>
-Date: Tue, 30 Nov 2021 20:36:28 +0800
-Subject: [PATCH 09/22] cpufreq: amd: add trace for amd-pstate module
+Date: Mon, 20 Dec 2021 00:35:23 +0800
+Subject: [PATCH 09/14] cpufreq: amd-pstate: add trace for AMD P-State module
 
 Add trace event to monitor the performance value changes which is
 controlled by cpu governors.
@@ -132,10 +132,10 @@ index 000000000000..647505957d4f
 +
 +#include <trace/define_trace.h>
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 68991c450fd5..72a4e2258fe7 100644
+index 25d4f0563a84..fa2268df4f2e 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -31,6 +31,7 @@
+@@ -44,6 +44,7 @@
  #include <asm/processor.h>
  #include <asm/cpufeature.h>
  #include <asm/cpu_device_id.h>
@@ -143,7 +143,7 @@ index 68991c450fd5..72a4e2258fe7 100644
  
  #define AMD_PSTATE_TRANSITION_LATENCY	0x20000
  #define AMD_PSTATE_TRANSITION_DELAY	500
-@@ -189,6 +190,9 @@ static void amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
+@@ -220,6 +221,9 @@ static void amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
  	value &= ~REQ_MAX_PERF(~0L);
  	value |= REQ_MAX_PERF(max_perf);
  

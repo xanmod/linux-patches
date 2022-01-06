@@ -1,7 +1,7 @@
-From 90e15c0cd007910c46dd58349c171bbe2d4fbcb3 Mon Sep 17 00:00:00 2001
+From bef10e3376648ed702eb29e42f02c9efe522e0a9 Mon Sep 17 00:00:00 2001
 From: Jinzhou Su <Jinzhou.Su@amd.com>
-Date: Tue, 30 Nov 2021 20:36:24 +0800
-Subject: [PATCH 05/22] ACPI: CPPC: add cppc enable register function
+Date: Mon, 20 Dec 2021 00:35:19 +0800
+Subject: [PATCH 05/14] ACPI: CPPC: add cppc enable register function
 
 Add a new function to enable CPPC feature. This function
 will write Continuous Performance Control package
@@ -14,7 +14,7 @@ OSPM writes a One to enable CPPC on this processor. Before this register
 is set, the processor will be controlled by legacy mechanisms (ACPI
 Pstates, firmware, etc.).
 
-This register will be used for AMD processors to enable amd-pstate
+This register will be used for AMD processors to enable AMD P-State
 function instead of legacy ACPI P-States.
 
 Signed-off-by: Jinzhou Su <Jinzhou.Su@amd.com>
@@ -25,10 +25,10 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  2 files changed, 50 insertions(+)
 
 diff --git a/drivers/acpi/cppc_acpi.c b/drivers/acpi/cppc_acpi.c
-index e260e14fb873..6088439d3e10 100644
+index 61ad942b19e7..e7c41989ec96 100644
 --- a/drivers/acpi/cppc_acpi.c
 +++ b/drivers/acpi/cppc_acpi.c
-@@ -1282,6 +1282,51 @@ int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
+@@ -1288,6 +1288,51 @@ int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
  }
  EXPORT_SYMBOL_GPL(cppc_get_perf_ctrs);
  
