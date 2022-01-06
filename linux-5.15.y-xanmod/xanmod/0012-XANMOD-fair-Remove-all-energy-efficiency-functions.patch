@@ -1,7 +1,7 @@
 From dfb00b0e64ec4a1e28aa3b43e45b4ee6defe95c2 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Sun, 29 Aug 2021 23:58:33 +0000
-Subject: [PATCH 13/13] XANMOD: fair: Remove all energy efficiency functions
+Subject: [PATCH 12/12] XANMOD: fair: Remove all energy efficiency functions
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---

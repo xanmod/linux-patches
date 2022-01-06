@@ -1,7 +1,7 @@
 From a6c8115910440f8ffef10c45346d6eeedde55293 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Fri, 18 Jun 2021 19:10:55 +0000
-Subject: [PATCH 12/13] XANMOD: Makefile: Turn off loop vectorization for GCC
+Subject: [PATCH 11/12] XANMOD: Makefile: Turn off loop vectorization for GCC
  -O3 optimization level
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>

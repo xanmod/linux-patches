@@ -1,7 +1,7 @@
 From 75317d6febf8ffaabac5e99e444ef756462b5ce9 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <admfrade@gmail.com>
 Date: Mon, 29 Jan 2018 16:59:22 +0000
-Subject: [PATCH 05/13] XANMOD: dcache: cache_pressure = 50 decreases the rate
+Subject: [PATCH 04/12] XANMOD: dcache: cache_pressure = 50 decreases the rate
  at which VFS caches are reclaimed
 
 Signed-off-by: Alexandre Frade <admfrade@gmail.com>

@@ -1,7 +1,7 @@
 From 8a159b630bc4ec90828fc1b64110ec7d55d4e2c4 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <admfrade@gmail.com>
 Date: Mon, 29 Jan 2018 17:26:15 +0000
-Subject: [PATCH 04/13] XANMOD: kconfig: add 500Hz timer interrupt kernel
+Subject: [PATCH 03/12] XANMOD: kconfig: add 500Hz timer interrupt kernel
  config option
 
 Signed-off-by: Alexandre Frade <admfrade@gmail.com>

@@ -1,7 +1,7 @@
 From 1b504c3b0d054d212c8006d277e1627bfb9be945 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <admfrade@gmail.com>
 Date: Mon, 29 Jan 2018 17:41:29 +0000
-Subject: [PATCH 09/13] XANMOD: scripts: disable the localversion "+" tag of a
+Subject: [PATCH 08/12] XANMOD: scripts: disable the localversion "+" tag of a
  git repo
 
 Signed-off-by: Alexandre Frade <admfrade@gmail.com>
