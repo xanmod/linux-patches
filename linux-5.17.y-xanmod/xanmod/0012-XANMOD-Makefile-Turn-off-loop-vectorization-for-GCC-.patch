@@ -1,0 +1,26 @@
+From b71598eb5518f151daa411f1df3fcdff76a52d19 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Fri, 18 Jun 2021 19:10:55 +0000
+Subject: [PATCH 12/12] XANMOD: Makefile: Turn off loop vectorization for GCC
+ -O3 optimization level
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Makefile b/Makefile
+index 7214f075e1f0..db5fc43a9371 100644
+--- a/Makefile
++++ b/Makefile
+@@ -747,6 +747,7 @@ ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
+ KBUILD_CFLAGS += -O2
+ else ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3
+ KBUILD_CFLAGS += -O3
++KBUILD_CFLAGS += $(call cc-option, -fno-tree-loop-vectorize)
+ else ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
+ KBUILD_CFLAGS += -Os
+ endif
+-- 
+2.33.1
+
