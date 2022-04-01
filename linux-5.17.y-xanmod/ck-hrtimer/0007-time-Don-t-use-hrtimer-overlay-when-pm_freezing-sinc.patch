@@ -1,0 +1,69 @@
+From 807c28d9c33ccfd65ebdc3ef73ec3f2d9bd81d40 Mon Sep 17 00:00:00 2001
+From: graysky <graysky@archlinux.us>
+Date: Fri, 1 Apr 2022 05:48:42 -0400
+Subject: [PATCH 7/8] time: Don't use hrtimer overlay when pm_freezing since
+ some drivers still don't correctly use freezable timeouts.
+
+---
+ kernel/time/hrtimer.c | 2 +-
+ kernel/time/timer.c   | 9 +++++----
+ 2 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index e2ca96e2f779..c71894647aed 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -2406,7 +2406,7 @@ long __sched schedule_msec_hrtimeout(long timeout)
+ 	 * (yet) better than Hz, as would occur during startup, use regular
+ 	 * timers.
+ 	 */
+-	if (jiffs > 4 || hrtimer_resolution >= NSEC_PER_SEC / HZ)
++	if (jiffs > 4 || hrtimer_resolution >= NSEC_PER_SEC / HZ || pm_freezing)
+ 		return schedule_timeout(jiffs);
+ 
+ 	secs = timeout / 1000;
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index 30798e292291..00d3c94948e2 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -44,6 +44,7 @@
+ #include <linux/slab.h>
+ #include <linux/compat.h>
+ #include <linux/random.h>
++#include <linux/freezer.h>
+ 
+ #include <linux/uaccess.h>
+ #include <asm/unistd.h>
+@@ -2049,12 +2050,12 @@ void msleep(unsigned int msecs)
+ 	 * Use high resolution timers where the resolution of tick based
+ 	 * timers is inadequate.
+ 	 */
+-	if (jiffs < 5 && hrtimer_resolution < NSEC_PER_SEC / HZ) {
++	if (jiffs < 5 && hrtimer_resolution < NSEC_PER_SEC / HZ && !pm_freezing) {
+ 		while (msecs)
+ 			msecs = schedule_msec_hrtimeout_uninterruptible(msecs);
+ 		return;
+ 	}
+-	timeout = msecs_to_jiffies(msecs) + 1;
++	timeout = jiffs + 1;
+ 
+ 	while (timeout)
+ 		timeout = schedule_timeout_uninterruptible(timeout);
+@@ -2071,12 +2072,12 @@ unsigned long msleep_interruptible(unsigned int msecs)
+ 	int jiffs = msecs_to_jiffies(msecs);
+ 	unsigned long timeout;
+ 
+-	if (jiffs < 5 && hrtimer_resolution < NSEC_PER_SEC / HZ) {
++	if (jiffs < 5 && hrtimer_resolution < NSEC_PER_SEC / HZ && !pm_freezing) {
+ 		while (msecs && !signal_pending(current))
+ 			msecs = schedule_msec_hrtimeout_interruptible(msecs);
+ 		return msecs;
+ 	}
+-	timeout = msecs_to_jiffies(msecs) + 1;
++	timeout = jiffs + 1;
+ 
+ 	while (timeout && !signal_pending(current))
+ 		timeout = schedule_timeout_interruptible(timeout);
+-- 
+2.35.1
+
