@@ -1,0 +1,26 @@
+From 0ed227017251c5783a08d9af046305d26ebb05ba Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Thu, 3 Sep 2020 20:36:13 +0000
+Subject: [PATCH 13/14] XANMOD: init/Kconfig: Enable -O3 KBUILD_CFLAGS
+ optimization for all architectures
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ init/Kconfig | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/init/Kconfig b/init/Kconfig
+index c9407452a5de..523b2332c802 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1386,7 +1386,6 @@ config CC_OPTIMIZE_FOR_PERFORMANCE
+ 
+ config CC_OPTIMIZE_FOR_PERFORMANCE_O3
+ 	bool "Optimize more for performance (-O3)"
+-	depends on ARC
+ 	help
+ 	  Choosing this option will pass "-O3" to your compiler to optimize
+ 	  the kernel yet more for performance.
+-- 
+2.33.1
+
