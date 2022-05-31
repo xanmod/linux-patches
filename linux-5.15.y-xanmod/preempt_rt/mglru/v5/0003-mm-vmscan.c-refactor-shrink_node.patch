@@ -1,37 +1,22 @@
-From 59faf72a823f99aafc0d32e4b53cd6f1cd1c3fbe Mon Sep 17 00:00:00 2001
+From 6635f05a09845e41cd7913a36657da98904472df Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
-Date: Tue, 8 Mar 2022 19:12:20 -0700
-Subject: [PATCH 03/14] mm/vmscan.c: refactor shrink_node()
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Date: Wed, 10 Nov 2021 21:15:03 -0700
+Subject: [PATCH 03/10] mm/vmscan.c: refactor shrink_node()
 
-This patch refactors shrink_node() to improve readability for the
-upcoming changes to mm/vmscan.c.
+This patch refactors shrink_node(). This will make the upcoming
+changes to mm/vmscan.c more readable.
 
 Signed-off-by: Yu Zhao <yuzhao@google.com>
-Acked-by: Brian Geffon <bgeffon@google.com>
-Acked-by: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
-Acked-by: Oleksandr Natalenko <oleksandr@natalenko.name>
-Acked-by: Steven Barrett <steven@liquorix.net>
-Acked-by: Suleiman Souhlal <suleiman@google.com>
-Tested-by: Daniel Byrne <djbyrne@mtu.edu>
-Tested-by: Donald Carr <d@chaos-reins.com>
-Tested-by: Holger Hoffstätte <holger@applied-asynchrony.com>
 Tested-by: Konstantin Kharlamov <Hi-Angel@yandex.ru>
-Tested-by: Shuang Zhai <szhai2@cs.rochester.edu>
-Tested-by: Sofia Trinh <sofia.trinh@edi.works>
-Tested-by: Vaibhav Jain <vaibhav@linux.ibm.com>
-Reviewed-by: Barry Song <baohua@kernel.org>
 ---
- mm/vmscan.c | 198 +++++++++++++++++++++++++++-------------------------
- 1 file changed, 104 insertions(+), 94 deletions(-)
+ mm/vmscan.c | 186 +++++++++++++++++++++++++++-------------------------
+ 1 file changed, 98 insertions(+), 88 deletions(-)
 
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 37d6962e1b01..37b9563a0d4a 100644
+index d08275fe7ebc..872c45ab0e3d 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -2718,6 +2718,109 @@ enum scan_balance {
+@@ -2562,6 +2562,103 @@ enum scan_balance {
  	SCAN_FILE,
  };
  
@@ -41,12 +26,6 @@ index 37d6962e1b01..37b9563a0d4a 100644
 +	struct lruvec *target_lruvec;
 +
 +	target_lruvec = mem_cgroup_lruvec(sc->target_mem_cgroup, pgdat);
-+
-+	/*
-+	 * Flush the memory cgroup stats, so that we read accurate per-memcg
-+	 * lruvec stats for heuristics.
-+	 */
-+	mem_cgroup_flush_stats();
 +
 +	/*
 +	 * Determine the scan balance between anon and file LRUs.
@@ -141,7 +120,7 @@ index 37d6962e1b01..37b9563a0d4a 100644
  /*
   * Determine how aggressively the anon and file LRU lists should be
   * scanned.  The relative value of each set of LRU lists is determined
-@@ -3188,109 +3291,16 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
+@@ -3032,7 +3129,6 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
  	unsigned long nr_reclaimed, nr_scanned;
  	struct lruvec *target_lruvec;
  	bool reclaimable = false;
@@ -149,15 +128,7 @@ index 37d6962e1b01..37b9563a0d4a 100644
  
  	target_lruvec = mem_cgroup_lruvec(sc->target_mem_cgroup, pgdat);
  
- again:
--	/*
--	 * Flush the memory cgroup stats, so that we read accurate per-memcg
--	 * lruvec stats for heuristics.
--	 */
--	mem_cgroup_flush_stats();
--
- 	memset(&sc->nr, 0, sizeof(sc->nr));
- 
+@@ -3048,93 +3144,7 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
  	nr_reclaimed = sc->nr_reclaimed;
  	nr_scanned = sc->nr_scanned;
  
