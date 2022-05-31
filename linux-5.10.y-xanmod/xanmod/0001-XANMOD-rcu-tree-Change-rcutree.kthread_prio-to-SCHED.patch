@@ -1,0 +1,64 @@
+From 74580637ab617dd2995a20c096dfdb8f5ae0ed2a Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Sun, 10 Apr 2022 01:37:45 +0000
+Subject: [PATCH] XANMOD: rcu/tree: Change rcutree.kthread_prio to SCHED_RR
+ policy
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ kernel/rcu/rcutorture.c  | 2 +-
+ kernel/rcu/tree.c        | 2 +-
+ kernel/rcu/tree_plugin.h | 4 ++--
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
+index 6c1aea48a79a..d3b2c225ce51 100644
+--- a/kernel/rcu/rcutorture.c
++++ b/kernel/rcu/rcutorture.c
+@@ -888,7 +888,7 @@ static int rcu_torture_boost(void *arg)
+ 	VERBOSE_TOROUT_STRING("rcu_torture_boost started");
+ 
+ 	/* Set real-time priority. */
+-	sched_set_fifo_low(current);
++	sched_set_rr_low(current);
+ 
+ 	init_rcu_head_on_stack(&rbi.rcu);
+ 	/* Each pass through the following loop does one boost-test cycle. */
+diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
+index 5deac4eda641..f5617942e442 100644
+--- a/kernel/rcu/tree.c
++++ b/kernel/rcu/tree.c
+@@ -4267,7 +4267,7 @@ static int __init rcu_spawn_gp_kthread(void)
+ 		return 0;
+ 	if (kthread_prio) {
+ 		sp.sched_priority = kthread_prio;
+-		sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
++		sched_setscheduler_nocheck(t, SCHED_RR, &sp);
+ 	}
+ 	rnp = rcu_get_root();
+ 	raw_spin_lock_irqsave_rcu_node(rnp, flags);
+diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+index f5ba0740f9b5..ce9211feef2a 100644
+--- a/kernel/rcu/tree_plugin.h
++++ b/kernel/rcu/tree_plugin.h
+@@ -965,7 +965,7 @@ static void rcu_cpu_kthread_setup(unsigned int cpu)
+ 	struct sched_param sp;
+ 
+ 	sp.sched_priority = kthread_prio;
+-	sched_setscheduler_nocheck(current, SCHED_FIFO, &sp);
++	sched_setscheduler_nocheck(current, SCHED_RR, &sp);
+ #endif /* #ifdef CONFIG_RCU_BOOST */
+ }
+ 
+@@ -1157,7 +1157,7 @@ static void rcu_spawn_one_boost_kthread(struct rcu_node *rnp)
+ 	rnp->boost_kthread_task = t;
+ 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
+ 	sp.sched_priority = kthread_prio;
+-	sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
++	sched_setscheduler_nocheck(t, SCHED_RR, &sp);
+ 	wake_up_process(t); /* get to TASK_INTERRUPTIBLE quickly. */
+ }
+ 
+-- 
+2.33.1
+
