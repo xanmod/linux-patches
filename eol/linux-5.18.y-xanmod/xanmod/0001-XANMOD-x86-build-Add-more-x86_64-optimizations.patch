@@ -1,0 +1,27 @@
+From 8ff218e926b6c0495c79615edbc8909a8c5a1756 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Fri, 19 Aug 2022 17:44:52 +0000
+Subject: [PATCH] XANMOD: x86/build: Add more x86_64 optimizations
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ arch/x86/Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index c6494396e510..1bcda666b870 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -66,7 +66,8 @@ export BITS
+ #
+ #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53383
+ #
+-KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx
++KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -mno-avx2 \
++		   -mno-avx512f -mpopcnt -O3 $(call cc-option, -fno-tree-vectorize)
+ 
+ ifeq ($(CONFIG_X86_KERNEL_IBT),y)
+ #
+-- 
+2.35.1
+
