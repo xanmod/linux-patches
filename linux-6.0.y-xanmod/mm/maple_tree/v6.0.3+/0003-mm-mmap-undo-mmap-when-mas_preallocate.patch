@@ -1,0 +1,26 @@
+From 5ab9bb103524cf9a1227016c7055a3ea3f53b06f Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Fri, 21 Oct 2022 19:17:20 +0000
+Subject: [PATCH 3/3] mm/mmap: undo ->mmap() when mas_preallocate() fails
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ mm/mmap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 1927f7bbf3d3..3af663c55289 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -2758,7 +2758,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+ 	if (mas_preallocate(&mas, vma, GFP_KERNEL)) {
+ 		error = -ENOMEM;
+ 		if (file)
+-			goto unmap_and_free_vma;
++			goto close_and_free_vma;
+ 		else
+ 			goto free_vma;
+ 	}
+-- 
+2.35.1
+

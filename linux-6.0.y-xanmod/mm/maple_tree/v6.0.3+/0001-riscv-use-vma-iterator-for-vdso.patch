@@ -1,0 +1,34 @@
+From ca7d425f15afb191ab0ef6775a06cd1d5185e9ab Mon Sep 17 00:00:00 2001
+From: "Liam R. Howlett" <Liam.Howlett@Oracle.com>
+Date: Fri, 21 Oct 2022 16:27:02 +0000
+Subject: [PATCH 1/3] riscv: use vma iterator for vdso
+
+Remove the linked list use in favour of the vma iterator.
+
+Signed-off-by: Liam R. Howlett <Liam.Howlett@oracle.com>
+Reviewed-by: Davidlohr Bueso <dave@stgolabs.net>
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ arch/riscv/kernel/vdso.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/riscv/kernel/vdso.c b/arch/riscv/kernel/vdso.c
+index 4abc9aebdfae..53cc79fea996 100644
+--- a/arch/riscv/kernel/vdso.c
++++ b/arch/riscv/kernel/vdso.c
+@@ -119,10 +119,10 @@ int vdso_join_timens(struct task_struct *task, struct time_namespace *ns)
+ {
+ 	struct mm_struct *mm = task->mm;
+ 	struct vm_area_struct *vma;
+-
++	VMA_ITERATOR(vmi, mm, 0);
+ 	mmap_read_lock(mm);
+ 
+-	for (vma = mm->mmap; vma; vma = vma->vm_next) {
++	for_each_vma(vmi, vma) {
+ 		unsigned long size = vma->vm_end - vma->vm_start;
+ 
+ 		if (vma_is_special_mapping(vma, vdso_info.dm))
+-- 
+2.35.1
+
