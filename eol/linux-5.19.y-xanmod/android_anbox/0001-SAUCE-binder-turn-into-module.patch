@@ -1,4 +1,4 @@
-From 661de6099b182d6aeb0cc989307871bc2f084415 Mon Sep 17 00:00:00 2001
+From e72806d12996b91666ce2a5d8d5383113d1aa582 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <christian@brauner.io>
 Date: Wed, 16 Jan 2019 23:13:25 +0100
 Subject: [PATCH 1/2] SAUCE: binder: turn into module
@@ -14,7 +14,6 @@ currently still using them:
 - can_nice()
 - __wake_up_pollfree()
 - __close_fd_get_file()
-- mmput_async()
 - task_work_add()
 - map_kernel_range_noflush()
 - get_vm_area()
@@ -38,14 +37,13 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  fs/file.c                         |  1 +
  include/linux/ipc_namespace.h     |  3 +++
  ipc/namespace.c                   | 17 +++++++++++++++++
- kernel/fork.c                     |  1 +
  kernel/sched/core.c               |  1 +
  kernel/sched/wait.c               |  1 +
  kernel/task_work.c                |  1 +
  mm/memory.c                       |  1 +
  mm/vmalloc.c                      |  1 +
  security/security.c               |  4 ++++
- 16 files changed, 63 insertions(+), 15 deletions(-)
+ 15 files changed, 62 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/android/Kconfig b/drivers/android/Kconfig
 index 53b22e26266c..2d821ed78453 100644
@@ -90,10 +88,10 @@ index c9d3d0c99c25..b9d5ce8deca2 100644
 +# binder-$(CONFIG_ANDROID_BINDER_IPC) := binder.o binder_alloc.o
 +# binder-$(CONFIG_ANDROID_BINDERFS) += binderfs.o
 diff --git a/drivers/android/binder.c b/drivers/android/binder.c
-index 362c0deb65f1..4d21c4814031 100644
+index 8bac11d8e618..664b95c51c74 100644
 --- a/drivers/android/binder.c
 +++ b/drivers/android/binder.c
-@@ -6459,9 +6459,20 @@ static int __init binder_init(void)
+@@ -6515,9 +6515,20 @@ static int __init binder_init(void)
  	return ret;
  }
  
@@ -118,7 +116,7 @@ index 362c0deb65f1..4d21c4814031 100644
 -
 -MODULE_LICENSE("GPL v2");
 diff --git a/drivers/android/binder_alloc.h b/drivers/android/binder_alloc.h
-index 7dea57a84c79..136a7c8ba92f 100644
+index 1e4fd37af5e0..d37c721ccf6a 100644
 --- a/drivers/android/binder_alloc.h
 +++ b/drivers/android/binder_alloc.h
 @@ -6,6 +6,7 @@
@@ -139,7 +137,7 @@ index 7dea57a84c79..136a7c8ba92f 100644
  #else
  static inline void binder_selftest_alloc(struct binder_alloc *alloc) {}
 diff --git a/drivers/android/binder_internal.h b/drivers/android/binder_internal.h
-index 8dc0bccf8513..f6eccf037b14 100644
+index abe19d88c6ec..7971e5d55a09 100644
 --- a/drivers/android/binder_internal.h
 +++ b/drivers/android/binder_internal.h
 @@ -5,6 +5,7 @@
@@ -169,7 +167,7 @@ index 8dc0bccf8513..f6eccf037b14 100644
  #else
  static inline int __init init_binderfs(void)
 diff --git a/drivers/android/binderfs.c b/drivers/android/binderfs.c
-index 6c5e94f6cb3a..4fca1a34467f 100644
+index 588d753a7a19..2aa0c0759859 100644
 --- a/drivers/android/binderfs.c
 +++ b/drivers/android/binderfs.c
 @@ -123,7 +123,7 @@ static int binderfs_binder_device_create(struct inode *ref_inode,
@@ -190,7 +188,7 @@ index 6c5e94f6cb3a..4fca1a34467f 100644
  #else
  	bool use_reserve = true;
  #endif
-@@ -725,7 +725,7 @@ static int binderfs_fill_super(struct super_block *sb, struct fs_context *fc)
+@@ -698,7 +698,7 @@ static int binderfs_fill_super(struct super_block *sb, struct fs_context *fc)
  		return -ENOMEM;
  	info = sb->s_fs_info;
  
@@ -253,25 +251,13 @@ index e1fcaedba4fa..328aeffd63e8 100644
  
  static inline struct ipc_namespace *to_ipc_ns(struct ns_common *ns)
  {
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 54b2dd84de7b..5b28049c2fb8 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1232,6 +1232,7 @@ void mmput_async(struct mm_struct *mm)
- 		schedule_work(&mm->async_put_work);
- 	}
- }
-+EXPORT_SYMBOL(mmput_async);
- #endif
- 
- /**
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 320d82697037..2d65fa9e739c 100644
+index 638c6143fa0d..f6d8519af24c 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -7011,6 +7011,7 @@ int can_nice(const struct task_struct *p, const int nice)
- 	return (nice_rlim <= task_rlimit(p, RLIMIT_NICE) ||
- 		capable(CAP_SYS_NICE));
+@@ -7037,6 +7037,7 @@ int can_nice(const struct task_struct *p, const int nice)
+ {
+ 	return is_nice_reduction(p, nice) || capable(CAP_SYS_NICE);
  }
 +EXPORT_SYMBOL(can_nice);
  
@@ -314,7 +300,7 @@ index d8c5632ae554..fc0277a4da8c 100644
  /**
   * zap_page_range_single - remove user pages in a given range
 diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index effd1ff6a4b4..0127e31cb884 100644
+index a1ab9b472571..fccff941bb66 100644
 --- a/mm/vmalloc.c
 +++ b/mm/vmalloc.c
 @@ -2499,6 +2499,7 @@ struct vm_struct *get_vm_area(unsigned long size, unsigned long flags)
@@ -326,7 +312,7 @@ index effd1ff6a4b4..0127e31cb884 100644
  struct vm_struct *get_vm_area_caller(unsigned long size, unsigned long flags,
  				const void *caller)
 diff --git a/security/security.c b/security/security.c
-index 188b8f782220..662473196ee6 100644
+index 8b62654ff3f9..5b2475ca76eb 100644
 --- a/security/security.c
 +++ b/security/security.c
 @@ -752,24 +752,28 @@ int security_binder_set_context_mgr(const struct cred *mgr)

@@ -1,4 +1,4 @@
-From 87314976a930916bdddcf34d5755079b4853529a Mon Sep 17 00:00:00 2001
+From de786c7df0de3439513aece65b9a1fde6cecad19 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Fri, 25 Mar 2022 22:36:34 +0000
 Subject: [PATCH 02/14] XANMOD: Change rcutree.kthread_prio to SCHED_RR policy
@@ -11,18 +11,18 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  3 files changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
-index 7120165a9342..ec492e5417fa 100644
+index 7c72ee97455f..aaa2e1d2a0aa 100644
 --- a/kernel/rcu/rcutorture.c
 +++ b/kernel/rcu/rcutorture.c
-@@ -3341,7 +3341,7 @@ rcu_torture_init(void)
- 				t = per_cpu(ksoftirqd, cpu);
- 				WARN_ON_ONCE(!t);
- 				sp.sched_priority = 2;
--				sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
-+				sched_setscheduler_nocheck(t, SCHED_RR, &sp);
- 			}
- 		}
+@@ -2085,7 +2085,7 @@ static int rcutorture_booster_init(unsigned int cpu)
+ 		t = per_cpu(ksoftirqd, cpu);
+ 		WARN_ON_ONCE(!t);
+ 		sp.sched_priority = 2;
+-		sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
++		sched_setscheduler_nocheck(t, SCHED_RR, &sp);
  	}
+ 
+ 	/* Don't allow time recalculation while creating a new task. */
 diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
 index c25ba442044a..fc993202dc35 100644
 --- a/kernel/rcu/tree.c
