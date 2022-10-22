@@ -1,6 +1,6 @@
-From e9c793a126e77820bb981c475095fd87c33e472a Mon Sep 17 00:00:00 2001
+From 4748f73d932e10e82e632f00b27b48befe3cff4b Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
-Date: Fri, 25 Mar 2022 22:36:34 +0000
+Date: Wed, 17 Aug 2022 16:27:06 +0000
 Subject: [PATCH] XANMOD: Change rcutree.kthread_prio to SCHED_RR policy
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -11,23 +11,23 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  3 files changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
-index f922937eb39a..d41610f93c96 100644
+index d820ef615475..7c2861b24780 100644
 --- a/kernel/rcu/rcutorture.c
 +++ b/kernel/rcu/rcutorture.c
-@@ -3176,7 +3176,7 @@ rcu_torture_init(void)
- 				t = per_cpu(ksoftirqd, cpu);
- 				WARN_ON_ONCE(!t);
- 				sp.sched_priority = 2;
--				sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
-+				sched_setscheduler_nocheck(t, SCHED_RR, &sp);
- 			}
- 		}
+@@ -2001,7 +2001,7 @@ static int rcutorture_booster_init(unsigned int cpu)
+ 		t = per_cpu(ksoftirqd, cpu);
+ 		WARN_ON_ONCE(!t);
+ 		sp.sched_priority = 2;
+-		sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
++		sched_setscheduler_nocheck(t, SCHED_RR, &sp);
  	}
+ 
+ 	/* Don't allow time recalculation while creating a new task. */
 diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-index 477ebf6ec712..8a94617d356e 100644
+index a4a9d68b1fdc..962714062b87 100644
 --- a/kernel/rcu/tree.c
 +++ b/kernel/rcu/tree.c
-@@ -4431,7 +4431,7 @@ static int __init rcu_spawn_gp_kthread(void)
+@@ -4435,7 +4435,7 @@ static int __init rcu_spawn_gp_kthread(void)
  		return 0;
  	if (kthread_prio) {
  		sp.sched_priority = kthread_prio;
@@ -37,7 +37,7 @@ index 477ebf6ec712..8a94617d356e 100644
  	rnp = rcu_get_root();
  	raw_spin_lock_irqsave_rcu_node(rnp, flags);
 diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-index 0d21a5cdc724..200b42f95475 100644
+index ef2dd131e955..f03429a09049 100644
 --- a/kernel/rcu/tree_plugin.h
 +++ b/kernel/rcu/tree_plugin.h
 @@ -990,7 +990,7 @@ static void rcu_cpu_kthread_setup(unsigned int cpu)

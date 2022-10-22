@@ -1,0 +1,27 @@
+From f96ae710ee713060cd14f0c8d5b81ffcee3047e7 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Fri, 19 Aug 2022 17:44:52 +0000
+Subject: [PATCH] XANMOD: x86/build: Add more x86_64 optimizations
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ arch/x86/Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index 26188658be97..4a02766879c9 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -48,7 +48,8 @@ export BITS
+ #
+ #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53383
+ #
+-KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx
++KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -mno-avx2 \
++		   -mno-avx512f -mpopcnt -O3 $(call cc-option, -fno-tree-vectorize)
+ 
+ # Intel CET isn't enabled in the kernel
+ KBUILD_CFLAGS += $(call cc-option,-fcf-protection=none)
+-- 
+2.33.1
+

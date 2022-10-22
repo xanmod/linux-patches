@@ -1,4 +1,4 @@
-From a246acac51dee730f4799aeb4fd217f66f386b7d Mon Sep 17 00:00:00 2001
+From f064f6e8d20815fa619ebb75857c5d151e79c63a Mon Sep 17 00:00:00 2001
 From: Christian Brauner <christian@brauner.io>
 Date: Wed, 16 Jan 2019 23:13:25 +0100
 Subject: [PATCH 2/3] SAUCE: binder: turn into module
@@ -13,7 +13,6 @@ currently still using them:
 - security_binder_transfer_file()
 - can_nice()
 - __close_fd_get_file()
-- mmput_async()
 - task_work_add()
 - map_kernel_range_noflush()
 - get_vm_area()
@@ -35,13 +34,12 @@ Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
  fs/file.c                         |  1 +
  include/linux/ipc_namespace.h     |  3 +++
  ipc/namespace.c                   | 17 +++++++++++++++++
- kernel/fork.c                     |  1 +
  kernel/sched/core.c               |  1 +
  kernel/task_work.c                |  1 +
  mm/memory.c                       |  1 +
  mm/vmalloc.c                      |  1 +
  security/security.c               |  4 ++++
- 15 files changed, 62 insertions(+), 15 deletions(-)
+ 14 files changed, 61 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/android/Kconfig b/drivers/android/Kconfig
 index 53b22e26266c..2d821ed78453 100644
@@ -86,10 +84,10 @@ index c9d3d0c99c25..b9d5ce8deca2 100644
 +# binder-$(CONFIG_ANDROID_BINDER_IPC) := binder.o binder_alloc.o
 +# binder-$(CONFIG_ANDROID_BINDERFS) += binderfs.o
 diff --git a/drivers/android/binder.c b/drivers/android/binder.c
-index bcec598b89f2..da85f50c584c 100644
+index 00c6c03ff822..bc76a431bb17 100644
 --- a/drivers/android/binder.c
 +++ b/drivers/android/binder.c
-@@ -5993,9 +5993,20 @@ static int __init binder_init(void)
+@@ -6119,9 +6119,20 @@ static int __init binder_init(void)
  	return ret;
  }
  
@@ -114,7 +112,7 @@ index bcec598b89f2..da85f50c584c 100644
 -
 -MODULE_LICENSE("GPL v2");
 diff --git a/drivers/android/binder_alloc.h b/drivers/android/binder_alloc.h
-index 7dea57a84c79..136a7c8ba92f 100644
+index 1e4fd37af5e0..d37c721ccf6a 100644
 --- a/drivers/android/binder_alloc.h
 +++ b/drivers/android/binder_alloc.h
 @@ -6,6 +6,7 @@
@@ -135,7 +133,7 @@ index 7dea57a84c79..136a7c8ba92f 100644
  #else
  static inline void binder_selftest_alloc(struct binder_alloc *alloc) {}
 diff --git a/drivers/android/binder_internal.h b/drivers/android/binder_internal.h
-index 810c0b84d3f8..e6aa992cb3c3 100644
+index 1ade9799c8d5..d1f704cc793a 100644
 --- a/drivers/android/binder_internal.h
 +++ b/drivers/android/binder_internal.h
 @@ -5,6 +5,7 @@
@@ -165,10 +163,10 @@ index 810c0b84d3f8..e6aa992cb3c3 100644
  #else
  static inline int __init init_binderfs(void)
 diff --git a/drivers/android/binderfs.c b/drivers/android/binderfs.c
-index e80ba93c62a9..1a18e9dbb2a6 100644
+index 6d717ed76766..071678e66f75 100644
 --- a/drivers/android/binderfs.c
 +++ b/drivers/android/binderfs.c
-@@ -113,7 +113,7 @@ static int binderfs_binder_device_create(struct inode *ref_inode,
+@@ -121,7 +121,7 @@ static int binderfs_binder_device_create(struct inode *ref_inode,
  	struct super_block *sb = ref_inode->i_sb;
  	struct binderfs_info *info = sb->s_fs_info;
  #if defined(CONFIG_IPC_NS)
@@ -177,7 +175,7 @@ index e80ba93c62a9..1a18e9dbb2a6 100644
  #else
  	bool use_reserve = true;
  #endif
-@@ -402,7 +402,7 @@ static int binderfs_binder_ctl_create(struct super_block *sb)
+@@ -410,7 +410,7 @@ static int binderfs_binder_ctl_create(struct super_block *sb)
  	struct dentry *root = sb->s_root;
  	struct binderfs_info *info = sb->s_fs_info;
  #if defined(CONFIG_IPC_NS)
@@ -186,7 +184,7 @@ index e80ba93c62a9..1a18e9dbb2a6 100644
  #else
  	bool use_reserve = true;
  #endif
-@@ -682,7 +682,7 @@ static int binderfs_fill_super(struct super_block *sb, struct fs_context *fc)
+@@ -690,7 +690,7 @@ static int binderfs_fill_super(struct super_block *sb, struct fs_context *fc)
  		return -ENOMEM;
  	info = sb->s_fs_info;
  
@@ -196,10 +194,10 @@ index e80ba93c62a9..1a18e9dbb2a6 100644
  	info->root_gid = make_kgid(sb->s_user_ns, 0);
  	if (!gid_valid(info->root_gid))
 diff --git a/fs/file.c b/fs/file.c
-index 86dc9956af32..3cc1867f289f 100644
+index ee9317346702..21194c33efb3 100644
 --- a/fs/file.c
 +++ b/fs/file.c
-@@ -771,6 +771,7 @@ int __close_fd_get_file(unsigned int fd, struct file **res)
+@@ -816,6 +816,7 @@ int __close_fd_get_file(unsigned int fd, struct file **res)
  	*res = NULL;
  	return -ENOENT;
  }
@@ -208,7 +206,7 @@ index 86dc9956af32..3cc1867f289f 100644
  /*
   * variant of close_fd that gets a ref on the file for later fput.
 diff --git a/include/linux/ipc_namespace.h b/include/linux/ipc_namespace.h
-index 05e22770af51..3ccd19f13f5c 100644
+index b75395ec8d52..acd2398317c2 100644
 --- a/include/linux/ipc_namespace.h
 +++ b/include/linux/ipc_namespace.h
 @@ -120,6 +120,9 @@ extern int mq_init_ns(struct ipc_namespace *ns);
@@ -222,7 +220,7 @@ index 05e22770af51..3ccd19f13f5c 100644
  extern struct ipc_namespace *copy_ipcs(unsigned long flags,
  	struct user_namespace *user_ns, struct ipc_namespace *ns);
 diff --git a/ipc/namespace.c b/ipc/namespace.c
-index 7bd0766ddc3b..2bb05b2dacd1 100644
+index ae83f0f2651b..8970e5959e72 100644
 --- a/ipc/namespace.c
 +++ b/ipc/namespace.c
 @@ -172,6 +172,23 @@ void put_ipc_ns(struct ipc_namespace *ns)
@@ -249,23 +247,11 @@ index 7bd0766ddc3b..2bb05b2dacd1 100644
  
  static inline struct ipc_namespace *to_ipc_ns(struct ns_common *ns)
  {
-diff --git a/kernel/fork.c b/kernel/fork.c
-index f2c64ae59a1a..2fb084387516 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1147,6 +1147,7 @@ void mmput_async(struct mm_struct *mm)
- 		schedule_work(&mm->async_put_work);
- 	}
- }
-+EXPORT_SYMBOL(mmput_async);
- #endif
- 
- /**
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index aae1e0c0f461..744905ad31ed 100644
+index a019aa053a69..265b231750f6 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -6659,6 +6659,7 @@ int can_nice(const struct task_struct *p, const int nice)
+@@ -6990,6 +6990,7 @@ int can_nice(const struct task_struct *p, const int nice)
  	return (nice_rlim <= task_rlimit(p, RLIMIT_NICE) ||
  		capable(CAP_SYS_NICE));
  }
@@ -286,10 +272,10 @@ index 1698fbe6f0e1..90000404af2b 100644
  /**
   * task_work_cancel_match - cancel a pending work added by task_work_add()
 diff --git a/mm/memory.c b/mm/memory.c
-index fa40a5b7a7a7..eb89641a89d7 100644
+index efafef65c656..c25000d37fe7 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
-@@ -1643,6 +1643,7 @@ void zap_page_range(struct vm_area_struct *vma, unsigned long start,
+@@ -1656,6 +1656,7 @@ void zap_page_range(struct vm_area_struct *vma, unsigned long start,
  	mmu_notifier_invalidate_range_end(&range);
  	tlb_finish_mmu(&tlb);
  }
@@ -298,10 +284,10 @@ index fa40a5b7a7a7..eb89641a89d7 100644
  /**
   * zap_page_range_single - remove user pages in a given range
 diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index d5cd52805149..1e0bfeac55f5 100644
+index 8375eecc55de..37d6212bbbb1 100644
 --- a/mm/vmalloc.c
 +++ b/mm/vmalloc.c
-@@ -2425,6 +2425,7 @@ struct vm_struct *get_vm_area(unsigned long size, unsigned long flags)
+@@ -2459,6 +2459,7 @@ struct vm_struct *get_vm_area(unsigned long size, unsigned long flags)
  				  NUMA_NO_NODE, GFP_KERNEL,
  				  __builtin_return_address(0));
  }
@@ -310,31 +296,31 @@ index d5cd52805149..1e0bfeac55f5 100644
  struct vm_struct *get_vm_area_caller(unsigned long size, unsigned long flags,
  				const void *caller)
 diff --git a/security/security.c b/security/security.c
-index 9ffa9e9c5c55..6990e009ecab 100644
+index 7b9f9d3fffe5..1c693d37a1b6 100644
 --- a/security/security.c
 +++ b/security/security.c
-@@ -751,24 +751,28 @@ int security_binder_set_context_mgr(struct task_struct *mgr)
+@@ -753,24 +753,28 @@ int security_binder_set_context_mgr(const struct cred *mgr)
  {
  	return call_int_hook(binder_set_context_mgr, 0, mgr);
  }
 +EXPORT_SYMBOL(security_binder_set_context_mgr);
  
- int security_binder_transaction(struct task_struct *from,
- 				struct task_struct *to)
+ int security_binder_transaction(const struct cred *from,
+ 				const struct cred *to)
  {
  	return call_int_hook(binder_transaction, 0, from, to);
  }
 +EXPORT_SYMBOL(security_binder_transaction);
  
- int security_binder_transfer_binder(struct task_struct *from,
- 				    struct task_struct *to)
+ int security_binder_transfer_binder(const struct cred *from,
+ 				    const struct cred *to)
  {
  	return call_int_hook(binder_transfer_binder, 0, from, to);
  }
 +EXPORT_SYMBOL(security_binder_transfer_binder);
  
- int security_binder_transfer_file(struct task_struct *from,
- 				  struct task_struct *to, struct file *file)
+ int security_binder_transfer_file(const struct cred *from,
+ 				  const struct cred *to, struct file *file)
  {
  	return call_int_hook(binder_transfer_file, 0, from, to, file);
  }
@@ -343,5 +329,5 @@ index 9ffa9e9c5c55..6990e009ecab 100644
  int security_ptrace_access_check(struct task_struct *child, unsigned int mode)
  {
 -- 
-2.33.0
+2.33.1
 
