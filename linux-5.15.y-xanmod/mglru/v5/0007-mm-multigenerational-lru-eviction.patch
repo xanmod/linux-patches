@@ -828,8 +828,8 @@ index 072081378190..7233bd4ac139 100644
  
  static void shrink_lruvec(struct lruvec *lruvec, struct scan_control *sc)
 @@ -4427,6 +4972,11 @@ static void shrink_lruvec(struct lruvec *lruvec, struct scan_control *sc)
+	bool proportional_reclaim;
  	struct blk_plug plug;
- 	bool scan_adjusted;
  
 +	if (lru_gen_enabled()) {
 +		lru_gen_shrink_lruvec(lruvec, sc);
