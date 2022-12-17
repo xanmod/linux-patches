@@ -1,0 +1,26 @@
+From 25d35ddf9de48158f49d84748ce5f7071c2c30f5 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <admfrade@gmail.com>
+Date: Mon, 29 Jan 2018 17:31:25 +0000
+Subject: [PATCH 10/16] XANMOD: mm/vmscan: vm_swappiness = 30 decreases the
+ amount of swapping
+
+Signed-off-by: Alexandre Frade <admfrade@gmail.com>
+---
+ mm/vmscan.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index b2b1431352dc..559540cc5be9 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -178,7 +178,7 @@ struct scan_control {
+ /*
+  * From 0 .. 200.  Higher means more swappy.
+  */
+-int vm_swappiness = 60;
++int vm_swappiness = 30;
+
+ static void set_task_reclaim_state(struct task_struct *task,
+				   struct reclaim_state *rs)
+--
+2.35.1
