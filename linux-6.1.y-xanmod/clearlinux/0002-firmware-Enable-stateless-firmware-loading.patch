@@ -19,11 +19,11 @@ index 7c3590fd97c2..bb4880e10581 100644
 @@ -470,6 +470,8 @@ static int fw_decompress_xz(struct device *dev, struct fw_priv *fw_priv,
  static char fw_path_para[256];
  static const char * const fw_path[] = {
-	fw_path_para,
+ 	fw_path_para,
 +	"/etc/firmware/" UTS_RELEASE,
 +	"/etc/firmware",
-	"/lib/firmware/updates/" UTS_RELEASE,
-	"/lib/firmware/updates",
-	"/lib/firmware/" UTS_RELEASE,
+ 	"/lib/firmware/updates/" UTS_RELEASE,
+ 	"/lib/firmware/updates",
+ 	"/lib/firmware/" UTS_RELEASE,
 --
 2.35.1

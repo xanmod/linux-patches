@@ -1,0 +1,87 @@
+From 30f942e41f9740cb8a503a0c5ecd63a1066ae6c4 Mon Sep 17 00:00:00 2001
+From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Date: Thu, 25 Aug 2022 15:55:26 -0700
+Subject: [PATCH 3/4] sched/fair: Simplify asym_packing logic for SMT sched
+ groups
+
+When the destination CPU is an SMT sibling and idle, it can only help the
+busiest group if all of its other SMT siblings are also idle. Otherwise,
+there is not increase in throughput.
+
+It does not matter whether the busiest group has SMT siblings. Simply
+check if there are any tasks running on the local group before proceeding.
+
+Cc: Ben Segall <bsegall@google.com>
+Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
+Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
+Cc: Len Brown <len.brown@intel.com>
+Cc: Mel Gorman <mgorman@suse.de>
+Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Tim C. Chen <tim.c.chen@intel.com>
+Cc: Valentin Schneider <vschneid@redhat.com>
+Cc: x86@kernel.org
+Cc: linux-kernel@vger.kernel.org
+Reviewed-by: Len Brown <len.brown@intel.com>
+Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ kernel/sched/fair.c | 29 +++++++++--------------------
+ 1 file changed, 9 insertions(+), 20 deletions(-)
+
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index d6fd75c95ee6..8be60a884be5 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -8839,12 +8839,10 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
+ 				    struct sched_group *sg)
+ {
+ #ifdef CONFIG_SCHED_SMT
+-	bool local_is_smt, sg_is_smt;
++	bool local_is_smt;
+ 	int sg_busy_cpus;
+ 
+ 	local_is_smt = sds->local->flags & SD_SHARE_CPUCAPACITY;
+-	sg_is_smt = sg->flags & SD_SHARE_CPUCAPACITY;
+-
+ 	sg_busy_cpus = sgs->group_weight - sgs->idle_cpus;
+ 
+ 	if (!local_is_smt) {
+@@ -8865,25 +8863,16 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
+ 		return sched_asym_prefer(dst_cpu, sg->asym_prefer_cpu);
+ 	}
+ 
+-	/* @dst_cpu has SMT siblings. */
+-
+-	if (sg_is_smt) {
+-		int local_busy_cpus = sds->local->group_weight -
+-				      sds->local_stat.idle_cpus;
+-		int busy_cpus_delta = sg_busy_cpus - local_busy_cpus;
+-
+-		if (busy_cpus_delta == 1)
+-			return sched_asym_prefer(dst_cpu, sg->asym_prefer_cpu);
+-
+-		return false;
+-	}
+-
+ 	/*
+-	 * @sg does not have SMT siblings. Ensure that @sds::local does not end
+-	 * up with more than one busy SMT sibling and only pull tasks if there
+-	 * are not busy CPUs (i.e., no CPU has running tasks).
++	 * @dst_cpu has SMT siblings. When both @dst_cpu and the busiest core
++	 * have one or more busy siblings, moving tasks between them results
++	 * in the same throughput. Only if all the siblings of @dst_cpu are
++	 * idle throughput can increase.
++	 *
++	 * If the difference in the number of busy CPUs is two or more, let
++	 * find_busiest_group() take care of it.
+ 	 */
+-	if (!sds->local_stat.sum_nr_running)
++	if (sg_busy_cpus == 1 && !sds->local_stat.sum_nr_running)
+ 		return sched_asym_prefer(dst_cpu, sg->asym_prefer_cpu);
+ 
+ 	return false;
+-- 
+2.39.1
+

@@ -1,0 +1,53 @@
+From 8a6c57ef5766e6804bdf4caaf388035c06da06b8 Mon Sep 17 00:00:00 2001
+From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Date: Thu, 25 Aug 2022 15:55:28 -0700
+Subject: [PATCH 4/4] sched/fair: Let lower-priority CPUs do active balancing
+
+When more than one SMT siblings of a physical core are busy, an idle CPU
+of lower priority can help.
+
+Indicate that the low priority CPU can do active balancing from the high-
+priority CPU only if they belong to separate cores.
+
+Cc: Ben Segall <bsegall@google.com>
+Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
+Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
+Cc: Len Brown <len.brown@intel.com>
+Cc: Mel Gorman <mgorman@suse.de>
+Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Tim C. Chen <tim.c.chen@intel.com>
+Cc: Valentin Schneider <vschneid@redhat.com>
+Cc: x86@kernel.org
+Cc: linux-kernel@vger.kernel.org
+Reviewed-by: Len Brown <len.brown@intel.com>
+Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ kernel/sched/fair.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 8be60a884be5..cae0f8de7e26 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -10094,9 +10094,14 @@ asym_active_balance(struct lb_env *env)
+ 	 * ASYM_PACKING needs to force migrate tasks from busy but
+ 	 * lower priority CPUs in order to pack all tasks in the
+ 	 * highest priority CPUs.
++	 *
++	 * If the busy CPU has higher priority but is an SMT sibling
++	 * in which other SMT siblings are also busy, a lower-priority
++	 * CPU in a separate core can help.
+ 	 */
+ 	return env->idle != CPU_NOT_IDLE && (env->sd->flags & SD_ASYM_PACKING) &&
+-	       sched_asym_prefer(env->dst_cpu, env->src_cpu);
++	       (sched_asym_prefer(env->dst_cpu, env->src_cpu) ||
++		!(env->sd->flags & SD_SHARE_CPUCAPACITY));
+ }
+ 
+ static inline bool
+-- 
+2.39.1
+
