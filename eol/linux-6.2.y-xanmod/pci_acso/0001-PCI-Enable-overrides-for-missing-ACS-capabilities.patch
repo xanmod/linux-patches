@@ -1,7 +1,7 @@
-From b439265bbf1e77a21443816d764b0d9f6a2b2a0e Mon Sep 17 00:00:00 2001
+From 9143f5748be5ef14173064b56d6cc9db2934213a Mon Sep 17 00:00:00 2001
 From: Mark Weiman <mark.weiman@markzz.com>
 Date: Sun, 12 Aug 2018 11:36:21 -0400
-Subject: [PATCH] pci: Enable overrides for missing ACS capabilities
+Subject: [PATCH] PCI: Enable overrides for missing ACS capabilities
 
 This an updated version of Alex Williamson's patch from:
 https://lkml.org/lkml/2013/5/30/513
@@ -50,8 +50,8 @@ Signed-off-by: Mark Weiman <mark.weiman@markzz.com>
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
  .../admin-guide/kernel-parameters.txt         |   9 ++
- drivers/pci/quirks.c                          | 101 ++++++++++++++++++
- 2 files changed, 110 insertions(+)
+ drivers/pci/quirks.c                          | 102 ++++++++++++++++++
+ 2 files changed, 111 insertions(+)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
 index dac8aba7d887..f6e4cb47a02d 100644
@@ -74,7 +74,7 @@ index dac8aba7d887..f6e4cb47a02d 100644
  				Safety option to keep boot IRQs enabled. This
  				should never be necessary.
 diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
-index 285acc4aaccc..492e88a99c07 100644
+index 494fa46f5767..cdf0c12590da 100644
 --- a/drivers/pci/quirks.c
 +++ b/drivers/pci/quirks.c
 @@ -3612,6 +3612,106 @@ static void quirk_no_bus_reset(struct pci_dev *dev)
@@ -184,10 +184,11 @@ index 285acc4aaccc..492e88a99c07 100644
  /*
   * Some NVIDIA GPU devices do not work with bus reset, SBR needs to be
   * prevented for those affected devices.
-@@ -4980,6 +5080,7 @@ static const struct pci_dev_acs_enabled {
- 	{ PCI_VENDOR_ID_NXP, 0x8d9b, pci_quirk_nxp_rp_acs },
- 	/* Zhaoxin Root/Downstream Ports */
+@@ -5002,6 +5102,8 @@ static const struct pci_dev_acs_enabled {
  	{ PCI_VENDOR_ID_ZHAOXIN, PCI_ANY_ID, pci_quirk_zhaoxin_pcie_ports_acs },
+ 	/* Wangxun nics */
+ 	{ PCI_VENDOR_ID_WANGXUN, PCI_ANY_ID, pci_quirk_wangxun_nic_acs },
++	/* ACS override */
 +	{ PCI_ANY_ID, PCI_ANY_ID, pcie_acs_overrides },
  	{ 0 }
  };
