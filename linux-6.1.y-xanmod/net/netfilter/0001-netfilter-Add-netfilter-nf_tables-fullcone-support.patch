@@ -1,7 +1,7 @@
 From bc63c2e8e152b86b6204f962e5e06b15f7814663 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 12 Dec 2022 22:50:49 +0000
-Subject: [PATCH] netfilter: Add netfilter nf_tables fullcone support
+Subject: [PATCH 1/2] netfilter: Add netfilter nf_tables fullcone support
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
