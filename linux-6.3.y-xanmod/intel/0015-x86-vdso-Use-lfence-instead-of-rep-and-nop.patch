@@ -1,0 +1,26 @@
+From f6db973c4fbe0d897e1ad423150813093e88f5e0 Mon Sep 17 00:00:00 2001
+From: Arjan van de Ven <arjan@linux.intel.com>
+Date: Sat, 8 Dec 2018 18:21:32 +0000
+Subject: [PATCH 15/21] x86/vdso: Use lfence instead of rep and nop
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ arch/x86/include/asm/vdso/processor.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/x86/include/asm/vdso/processor.h b/arch/x86/include/asm/vdso/processor.h
+index 2cbce97d29ea..0f86e3fc3b3e 100644
+--- a/arch/x86/include/asm/vdso/processor.h
++++ b/arch/x86/include/asm/vdso/processor.h
+@@ -10,7 +10,7 @@
+ /* REP NOP (PAUSE) is a good thing to insert into busy-wait loops. */
+ static __always_inline void rep_nop(void)
+ {
+-	asm volatile("rep; nop" ::: "memory");
++	asm volatile("lfence" ::: "memory");
+ }
+ 
+ static __always_inline void cpu_relax(void)
+-- 
+2.39.1
+
