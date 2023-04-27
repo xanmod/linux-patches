@@ -1,6 +1,6 @@
-From 309ee1abd24f0c8b075646e4c739061c9a82a4bb Mon Sep 17 00:00:00 2001
+From 4d4586af01931206c873a5b18bbb0000e0502e2a Mon Sep 17 00:00:00 2001
 From: Chen Yu <yu.c.chen@intel.com>
-Date: Fri, 3 Feb 2023 13:17:59 +0800
+Date: Sat, 22 Apr 2023 00:07:59 +0800
 Subject: [PATCH 01/21] sched/fair: Record the average duration of a task
 
 Record the average duration of a task, as there is a requirement
@@ -42,6 +42,7 @@ how long it wishes to run at most.
 
 Suggested-by: Tim Chen <tim.c.chen@intel.com>
 Suggested-by: Vincent Guittot <vincent.guittot@linaro.org>
+Tested-by: K Prateek Nayak <kprateek.nayak@amd.com>
 Signed-off-by: Chen Yu <yu.c.chen@intel.com>
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
@@ -66,7 +67,7 @@ index 63d242164b1a..6d398b337b0d 100644
  #ifdef CONFIG_FAIR_GROUP_SCHED
  	int				depth;
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index c0e14d09c53a..7c8e279dfb22 100644
+index d010b454f3fb..a509a41e3836 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -4442,6 +4442,8 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
@@ -91,7 +92,7 @@ index 1637b65ba07a..8d64fba16cfe 100644
  	P(se.avg.load_sum);
  	P(se.avg.runnable_sum);
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 7902e0b71343..ec0d79a28330 100644
+index a97d13f289b9..bda478c52bf2 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -6318,6 +6318,18 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
