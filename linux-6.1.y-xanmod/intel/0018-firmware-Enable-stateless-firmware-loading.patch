@@ -1,7 +1,7 @@
 From cd5f0576c52de20010580d843c026a4194b7af23 Mon Sep 17 00:00:00 2001
 From: William Douglas <william.douglas@intel.com>
 Date: Wed, 20 Jun 2018 17:23:21 +0000
-Subject: [PATCH 2/5] firmware: Enable stateless firmware loading
+Subject: [PATCH 18/21] firmware: Enable stateless firmware loading
 
 Prefer the order of specific version before generic and /etc before
 /lib to enable the user to give specific overrides for generic
@@ -25,5 +25,5 @@ index 7c3590fd97c2..bb4880e10581 100644
  	"/lib/firmware/updates/" UTS_RELEASE,
  	"/lib/firmware/updates",
  	"/lib/firmware/" UTS_RELEASE,
---
+-- 
 2.35.1

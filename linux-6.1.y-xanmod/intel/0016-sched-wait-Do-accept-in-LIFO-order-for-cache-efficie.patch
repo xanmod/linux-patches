@@ -1,7 +1,7 @@
 From 23f73183d2ad8c243da017c1dc2b0fe0b40dffae Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 13 Dec 2018 01:00:49 +0000
-Subject: [PATCH 2/4] sched/wait: Do accept() in LIFO order for cache
+Subject: [PATCH 16/21] sched/wait: Do accept() in LIFO order for cache
  efficiency
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>

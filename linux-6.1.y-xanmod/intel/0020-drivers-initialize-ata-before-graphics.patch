@@ -1,7 +1,7 @@
 From 844dfb2ddaf91be561f100f8b7bcba69596be319 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 2 Jun 2016 23:36:32 -0500
-Subject: [PATCH 4/5] drivers: initialize ata before graphics
+Subject: [PATCH 20/21] drivers: initialize ata before graphics
 
 ATA init is the long pole in the boot process, and its asynchronous.
 move the graphics init after it so that ata and graphics initialize
@@ -19,12 +19,12 @@ index 057857258bfd..643e2d3dee81 100644
 @@ -59,15 +59,8 @@ obj-y				+= char/
  # iommu/ comes before gpu as gpu are using iommu controllers
  obj-y				+= iommu/
-
+ 
 -# gpu/ comes after char for AGP vs DRM startup and after iommu
 -obj-y				+= gpu/
 -
  obj-$(CONFIG_CONNECTOR)		+= connector/
-
+ 
 -# i810fb and intelfb depend on char/agp/
 -obj-$(CONFIG_FB_I810)           += video/fbdev/i810/
 -obj-$(CONFIG_FB_INTEL)          += video/fbdev/intelfb/
@@ -47,5 +47,5 @@ index 057857258bfd..643e2d3dee81 100644
  obj-$(CONFIG_TARGET_CORE)	+= target/
  obj-$(CONFIG_MTD)		+= mtd/
  obj-$(CONFIG_SPI)		+= spi/
---
+-- 
 2.35.1
