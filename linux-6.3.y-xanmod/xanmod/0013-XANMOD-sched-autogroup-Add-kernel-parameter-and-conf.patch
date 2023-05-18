@@ -1,7 +1,7 @@
 From fa4d57d4c2cb3021167b1f27f7752203e3fa0ffd Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Wed, 15 Jun 2022 17:07:29 +0000
-Subject: [PATCH 11/16] XANMOD: sched/autogroup: Add kernel parameter and
+Subject: [PATCH 13/18] XANMOD: sched/autogroup: Add kernel parameter and
  config option to enable/disable autogroup feature by default
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>

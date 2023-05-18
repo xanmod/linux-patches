@@ -1,7 +1,7 @@
 From c2e2d95e6c2f7daf5af3c08be2447fcc6d492d71 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Tue, 25 Apr 2023 01:40:24 +0000
-Subject: [PATCH 01/16] XANMOD: x86/build: Add more x86_64 optimizations
+Subject: [PATCH 01/18] XANMOD: x86/build: Add more x86_64 optimizations
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
