@@ -1,16 +1,17 @@
-From bc63c2e8e152b86b6204f962e5e06b15f7814663 Mon Sep 17 00:00:00 2001
+From 5f603da15b9a07384dd6afd48864350ab0600bfd Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
-Date: Mon, 12 Dec 2022 22:50:49 +0000
+Date: Mon, 27 Feb 2023 01:38:18 +0000
 Subject: [PATCH 1/2] netfilter: Add netfilter nf_tables fullcone support
 
+Signed-off-by: Syrone Wong <wong.syrone@gmail.com>
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
  include/net/netfilter/nf_nat_fullcone.h |  156 +++
  net/netfilter/Kconfig                   |   15 +
  net/netfilter/Makefile                  |    5 +
- net/netfilter/nf_nat_fullcone.c         | 1595 +++++++++++++++++++++++
- net/netfilter/nft_ext_fullcone.c        |  460 +++++++
- 5 files changed, 2231 insertions(+)
+ net/netfilter/nf_nat_fullcone.c         | 1604 +++++++++++++++++++++++
+ net/netfilter/nft_ext_fullcone.c        |  466 +++++++
+ 5 files changed, 2246 insertions(+)
  create mode 100644 include/net/netfilter/nf_nat_fullcone.h
  create mode 100644 net/netfilter/nf_nat_fullcone.c
  create mode 100644 net/netfilter/nft_ext_fullcone.c
@@ -178,13 +179,13 @@ index 000000000000..bfb4791421e9
 +
 +#endif /*_NF_NAT_FULLCONE_H_ */
 diff --git a/net/netfilter/Kconfig b/net/netfilter/Kconfig
-index 4b8d04640ff3..3dff9d8bf50b 100644
+index 4d6737160857..94db896aa236 100644
 --- a/net/netfilter/Kconfig
 +++ b/net/netfilter/Kconfig
-@@ -562,6 +562,21 @@ config NFT_NAT
-	  This option adds the "nat" expression that you can use to perform
-	  typical Network Address Translation (NAT) packet transformations.
-
+@@ -568,6 +568,21 @@ config NFT_NAT
+ 	  This option adds the "nat" expression that you can use to perform
+ 	  typical Network Address Translation (NAT) packet transformations.
+ 
 +config NFT_FULLCONE
 +	depends on NF_CONNTRACK
 +	depends on NF_NAT
@@ -201,14 +202,14 @@ index 4b8d04640ff3..3dff9d8bf50b 100644
 +	  If unsure, say N.
 +
  config NFT_TUNNEL
-	tristate "Netfilter nf_tables tunnel module"
-	help
+ 	tristate "Netfilter nf_tables tunnel module"
+ 	help
 diff --git a/net/netfilter/Makefile b/net/netfilter/Makefile
-index 0f060d100880..6025f767b447 100644
+index 5ffef1cd6143..6b66038e8a7d 100644
 --- a/net/netfilter/Makefile
 +++ b/net/netfilter/Makefile
-@@ -226,3 +226,8 @@ obj-$(CONFIG_IP_VS) += ipvs/
-
+@@ -234,3 +234,8 @@ obj-$(CONFIG_IP_VS) += ipvs/
+ 
  # lwtunnel
  obj-$(CONFIG_LWTUNNEL) += nf_hooks_lwtunnel.o
 +
@@ -218,10 +219,10 @@ index 0f060d100880..6025f767b447 100644
 +	nft_ext_fullcone.o
 diff --git a/net/netfilter/nf_nat_fullcone.c b/net/netfilter/nf_nat_fullcone.c
 new file mode 100644
-index 000000000000..349ae3915523
+index 000000000000..c63470fd8acb
 --- /dev/null
 +++ b/net/netfilter/nf_nat_fullcone.c
-@@ -0,0 +1,1595 @@
+@@ -0,0 +1,1604 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +
 +/*
@@ -234,6 +235,8 @@ index 000000000000..349ae3915523
 + *   Ported to recent kernel versions
 + * Copyright (c) 2022 Syrone Wong <wong.syrone@gmail.com>
 + *   Massively rewrite the whole module, split the original code into library and nftables 'fullcone' expression module
++ * Copyright (c) 2022 Alexandre Frade <kernel@xanmod.org>
++ *   Ported to latest kernel source tree
 + */
 +
 +#define pr_fmt(fmt) "fullcone " KBUILD_MODNAME ": " fmt
@@ -1078,7 +1081,11 @@ index 000000000000..349ae3915523
 +		/* for now we do the same thing for both --random and --random-fully */
 +
 +		/* select a random starting point */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
 +		start = (uint16_t) (get_random_u32() % (u32) range_size);
++#else
++		start = (uint16_t) (prandom_u32() % (u32) range_size);
++#endif
 +	} else {
 +
 +		if ((original_port >= min && original_port <= min + range_size - 1)
@@ -1151,7 +1158,11 @@ index 000000000000..349ae3915523
 +		/* for now we do the same thing for both --random and --random-fully */
 +
 +		/* select a random starting point */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
 +		start = (uint16_t) (get_random_u32() % (u32) range_size);
++#else
++		start = (uint16_t) (prandom_u32() % (u32) range_size);
++#endif
 +	} else {
 +
 +		if ((original_port >= min && original_port <= min + range_size - 1)
@@ -1815,14 +1826,13 @@ index 000000000000..349ae3915523
 +
 +MODULE_LICENSE("GPL");
 +MODULE_AUTHOR("Syrone Wong <wong.syrone@gmail.com>");
-+MODULE_ALIAS_NFT_EXPR("fullcone");
 +MODULE_DESCRIPTION("Netfilter fullcone expression support library of RFC3489 full cone NAT");
 diff --git a/net/netfilter/nft_ext_fullcone.c b/net/netfilter/nft_ext_fullcone.c
 new file mode 100644
-index 000000000000..b30796bffadf
+index 000000000000..16249abfdf5a
 --- /dev/null
 +++ b/net/netfilter/nft_ext_fullcone.c
-@@ -0,0 +1,460 @@
+@@ -0,0 +1,466 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +
 +/*
@@ -1835,6 +1845,8 @@ index 000000000000..b30796bffadf
 + *   Ported to recent kernel versions
 + * Copyright (c) 2022 Syrone Wong <wong.syrone@gmail.com>
 + *   Massively rewrite the whole module, split the original code into library and nftables 'fullcone' expression module
++ * Copyright (c) 2022 Alexandre Frade <kernel@xanmod.org>
++ *   Ported to latest kernel source tree
 + */
 +
 +#define pr_fmt(fmt) "fullcone " KBUILD_MODNAME ": " fmt
@@ -2006,7 +2018,11 @@ index 000000000000..b30796bffadf
 +	return err;
 +}
 +
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
++static int nft_fullcone_dump(struct sk_buff *skb, const struct nft_expr *expr, bool reset)
++#else
 +static int nft_fullcone_dump(struct sk_buff *skb, const struct nft_expr *expr)
++#endif
 +{
 +	const struct nft_fullcone *priv = nft_expr_priv(expr);
 +
@@ -2283,5 +2299,6 @@ index 000000000000..b30796bffadf
 +MODULE_AUTHOR("Syrone Wong <wong.syrone@gmail.com>");
 +MODULE_ALIAS_NFT_EXPR("fullcone");
 +MODULE_DESCRIPTION("Netfilter nftables fullcone expression support of RFC3489 full cone NAT");
---
-2.35.1
+-- 
+2.39.1
+

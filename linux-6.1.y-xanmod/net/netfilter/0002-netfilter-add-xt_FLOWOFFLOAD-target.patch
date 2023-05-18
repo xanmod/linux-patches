@@ -1,4 +1,4 @@
-From d6a0b7e5a5f32a1852e7e7cc96a003dab5f49af6 Mon Sep 17 00:00:00 2001
+From 3a024a88f2316650d4430d2b61cce181614c316e Mon Sep 17 00:00:00 2001
 From: Felix Fietkau <nbd@nbd.name>
 Date: Tue, 20 Feb 2018 15:56:02 +0100
 Subject: [PATCH 2/2] netfilter: add xt_FLOWOFFLOAD target
@@ -11,8 +11,8 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  net/netfilter/Kconfig                         |  14 +-
  net/netfilter/Makefile                        |   1 +
  net/netfilter/nf_flow_table_core.c            |   5 +-
- net/netfilter/xt_FLOWOFFLOAD.c                | 697 ++++++++++++++++++
- 6 files changed, 733 insertions(+), 6 deletions(-)
+ net/netfilter/xt_FLOWOFFLOAD.c                | 698 ++++++++++++++++++
+ 6 files changed, 734 insertions(+), 6 deletions(-)
  create mode 100644 include/uapi/linux/netfilter/xt_FLOWOFFLOAD.h
  create mode 100644 net/netfilter/xt_FLOWOFFLOAD.c
 
@@ -142,10 +142,10 @@ index 81c26a96c30b..09bf54066d6d 100644
  {
 diff --git a/net/netfilter/xt_FLOWOFFLOAD.c b/net/netfilter/xt_FLOWOFFLOAD.c
 new file mode 100644
-index 000000000000..6cb151502a82
+index 000000000000..99cccdaba650
 --- /dev/null
 +++ b/net/netfilter/xt_FLOWOFFLOAD.c
-@@ -0,0 +1,697 @@
+@@ -0,0 +1,698 @@
 +/*
 + * Copyright (C) 2018-2021 Felix Fietkau <nbd@nbd.name>
 + *
@@ -799,6 +799,7 @@ index 000000000000..6cb151502a82
 +{
 +	INIT_DELAYED_WORK(&tbl->work, xt_flowoffload_hook_work);
 +	tbl->ft.type = &flowtable_inet;
++	tbl->ft.flags = NF_FLOWTABLE_COUNTER;
 +
 +	return nf_flow_table_init(&tbl->ft);
 +}
@@ -817,7 +818,7 @@ index 000000000000..6cb151502a82
 +	if (ret)
 +		goto cleanup;
 +
-+	flowtable[1].ft.flags = NF_FLOWTABLE_HW_OFFLOAD;
++	flowtable[1].ft.flags |= NF_FLOWTABLE_HW_OFFLOAD;
 +
 +	ret = xt_register_target(&offload_tg_reg);
 +	if (ret)

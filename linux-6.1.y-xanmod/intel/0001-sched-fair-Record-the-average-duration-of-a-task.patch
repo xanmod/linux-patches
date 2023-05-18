@@ -1,6 +1,6 @@
-From 4d4586af01931206c873a5b18bbb0000e0502e2a Mon Sep 17 00:00:00 2001
+From e623ad77a62e35ad30508a2bf4d9e57a0332a19b Mon Sep 17 00:00:00 2001
 From: Chen Yu <yu.c.chen@intel.com>
-Date: Sat, 22 Apr 2023 00:07:59 +0800
+Date: Sat, 29 Apr 2023 07:16:41 +0800
 Subject: [PATCH 01/21] sched/fair: Record the average duration of a task
 
 Record the average duration of a task, as there is a requirement
@@ -16,7 +16,8 @@ Although something based on PELT can be used, se.util_avg might
 not be appropriate to describe the task duration:
 Task p1 and task p2 are doing frequent ping-pong scheduling on
 one CPU, both p1 and p2 have a short duration, but the util_avg
-can be up to 50%, which is inconsistent with task duration.
+of each task can be up to 50%, which is inconsistent with the
+short task duration.
 
 It was found that there was once a similar feature to track the
 duration of a task:
@@ -25,7 +26,7 @@ Unfortunately, it was reverted because it was an experiment. Pick the
 patch up again, by recording the average duration when a task voluntarily
 switches out.
 
-For example, suppose on CPU1, task p1 and p2 run alternatively:
+Suppose on CPU1, task p1 and p2 run alternatively:
 
  --------------------> time
 
@@ -53,7 +54,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  4 files changed, 19 insertions(+)
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 63d242164b1a..6d398b337b0d 100644
+index a4c1e3638cb1..f64e64faf31b 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
 @@ -557,6 +557,9 @@ struct sched_entity {
@@ -67,10 +68,10 @@ index 63d242164b1a..6d398b337b0d 100644
  #ifdef CONFIG_FAIR_GROUP_SCHED
  	int				depth;
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index d010b454f3fb..a509a41e3836 100644
+index 5dc6e316150b..8a43bace1202 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -4442,6 +4442,8 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
+@@ -4501,6 +4501,8 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
  	p->se.prev_sum_exec_runtime	= 0;
  	p->se.nr_migrations		= 0;
  	p->se.vruntime			= 0;
@@ -92,10 +93,10 @@ index 1637b65ba07a..8d64fba16cfe 100644
  	P(se.avg.load_sum);
  	P(se.avg.runnable_sum);
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index a97d13f289b9..bda478c52bf2 100644
+index 97c78058a7fa..71f8602e05f6 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -6318,6 +6318,18 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
+@@ -6179,6 +6179,18 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
  
  static void set_next_buddy(struct sched_entity *se);
  
@@ -114,7 +115,7 @@ index a97d13f289b9..bda478c52bf2 100644
  /*
   * The dequeue_task method is called before nr_running is
   * decreased. We remove the task from the rbtree and
-@@ -6390,6 +6402,7 @@ static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
+@@ -6251,6 +6263,7 @@ static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
  
  dequeue_throttle:
  	util_est_update(&rq->cfs, p, task_sleep);

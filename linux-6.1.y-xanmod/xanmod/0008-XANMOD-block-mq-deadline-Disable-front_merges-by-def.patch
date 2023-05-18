@@ -1,7 +1,7 @@
 From f73504b1f652517d65e66d0546a4b2613b2e92cb Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Thu, 6 Jan 2022 16:59:01 +0000
-Subject: [PATCH 06/16] XANMOD: block/mq-deadline: Disable front_merges by
+Subject: [PATCH 08/18] XANMOD: block/mq-deadline: Disable front_merges by
  default
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>

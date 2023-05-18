@@ -1,7 +1,7 @@
 From 4697e9c3650ab67f5d37f8de3d64522760c16730 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <admfrade@gmail.com>
 Date: Tue, 31 Mar 2020 13:32:08 -0300
-Subject: [PATCH 12/16] XANMOD: cpufreq: tunes ondemand and conservative
+Subject: [PATCH 14/18] XANMOD: cpufreq: tunes ondemand and conservative
  governor for performance
 
 Signed-off-by: Alexandre Frade <admfrade@gmail.com>

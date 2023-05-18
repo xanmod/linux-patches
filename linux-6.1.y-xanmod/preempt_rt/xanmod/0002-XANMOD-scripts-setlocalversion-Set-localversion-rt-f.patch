@@ -1,0 +1,34 @@
+From f14d0a7e864ed71a3b5b11a0d14bf7c3f562094c Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Tue, 2 May 2023 06:23:38 +0000
+Subject: [PATCH] XANMOD: scripts/setlocalversion: Set localversion-rt file to
+ extraversion first
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ scripts/setlocalversion | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/scripts/setlocalversion b/scripts/setlocalversion
+index d2a8db8e8eae..7d89b102a6d2 100755
+--- a/scripts/setlocalversion
++++ b/scripts/setlocalversion
+@@ -118,12 +118,13 @@ fi
+ # localversion* files in the build and source directory
+ res="$(collect_files localversion*)"
+ if test ! "$srctree" -ef .; then
+-	res="$res$(collect_files "$srctree"/localversion*)"
++	res_rt="$res$(collect_files $(find "$srctree" -name "localversion-rt"))"
++	res="$res$(collect_files $(find "$srctree" -name "localversion*" ! -name "localversion-rt"))"
+ fi
+ 
+ # CONFIG_LOCALVERSION and LOCALVERSION (if set)
+ config_localversion=$(sed -n 's/^CONFIG_LOCALVERSION=\(.*\)$/\1/p' include/config/auto.conf)
+-res="${config_localversion}${LOCALVERSION}${res}"
++res="${res_rt}${config_localversion}${LOCALVERSION}${res}"
+ 
+ # scm version string if not at a tagged commit
+ if grep -q "^CONFIG_LOCALVERSION_AUTO=y$" include/config/auto.conf; then
+-- 
+2.39.1
+
