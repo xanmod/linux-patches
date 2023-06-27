@@ -1,0 +1,26 @@
+From 1571a304f5e4b78ee3d71c7e860ee283ea9d8b1d Mon Sep 17 00:00:00 2001
+From: Arjan van de Ven <arjan@linux.intel.com>
+Date: Sun, 22 Sep 2019 11:12:35 -0300
+Subject: [PATCH 5/9] intel_rapl: Silence rapl trace debug
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ drivers/powercap/intel_rapl_common.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/powercap/intel_rapl_common.c b/drivers/powercap/intel_rapl_common.c
+index 8970c7b80884..0853ad8d07cb 100644
+--- a/drivers/powercap/intel_rapl_common.c
++++ b/drivers/powercap/intel_rapl_common.c
+@@ -1529,7 +1529,7 @@ static int __init rapl_init(void)
+ 
+ 	id = x86_match_cpu(rapl_ids);
+ 	if (!id) {
+-		pr_err("driver does not support CPU family %d model %d\n",
++		pr_info("driver does not support CPU family %d model %d\n",
+ 		       boot_cpu_data.x86, boot_cpu_data.x86_model);
+ 
+ 		return -ENODEV;
+-- 
+2.39.2
+

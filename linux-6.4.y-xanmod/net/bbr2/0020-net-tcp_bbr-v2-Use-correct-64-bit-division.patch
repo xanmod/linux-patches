@@ -1,0 +1,50 @@
+From 793bd3cae278857a8c2b6300a125c4ab15ded99b Mon Sep 17 00:00:00 2001
+From: Konstantin Demin <rockdrilla@gmail.com>
+Date: Tue, 17 May 2022 10:10:40 +0300
+Subject: [PATCH 20/20] net-tcp_bbr: v2: Use correct 64-bit division
+
+Signed-off-by: Konstantin Demin <rockdrilla@gmail.com>
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ net/ipv4/tcp_bbr.c  | 2 +-
+ net/ipv4/tcp_bbr2.c | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/net/ipv4/tcp_bbr.c b/net/ipv4/tcp_bbr.c
+index ece20792083a..16038f6ee52a 100644
+--- a/net/ipv4/tcp_bbr.c
++++ b/net/ipv4/tcp_bbr.c
+@@ -312,7 +312,7 @@ static u32 bbr_tso_segs_generic(struct sock *sk, unsigned int mss_now,
+ 	bytes = sk->sk_pacing_rate >> sk->sk_pacing_shift;
+ 
+ 	bytes = min_t(u32, bytes, gso_max_size - 1 - MAX_TCP_HEADER);
+-	segs = max_t(u32, bytes / mss_now, bbr_min_tso_segs(sk));
++	segs = max_t(u32, div_u64(bytes, mss_now), bbr_min_tso_segs(sk));
+ 	return segs;
+ }
+ 
+diff --git a/net/ipv4/tcp_bbr2.c b/net/ipv4/tcp_bbr2.c
+index 037ebd2894a8..85f8052144d1 100644
+--- a/net/ipv4/tcp_bbr2.c
++++ b/net/ipv4/tcp_bbr2.c
+@@ -588,7 +588,7 @@ static void bbr_debug(struct sock *sk, u32 acked,
+ 		 bbr_rate_kbps(sk, bbr_max_bw(sk)), /* bw: max bw */
+ 		 0ULL,				    /* lb: [obsolete] */
+ 		 0ULL,				    /* ib: [obsolete] */
+-		 (u64)sk->sk_pacing_rate * 8 / 1000,
++		 div_u64((u64)sk->sk_pacing_rate * 8, 1000),
+ 		 acked,
+ 		 tcp_packets_in_flight(tp),
+ 		 rs->is_ack_delayed ? 'd' : '.',
+@@ -698,7 +698,7 @@ static u32 bbr_tso_segs_generic(struct sock *sk, unsigned int mss_now,
+ 	}
+ 
+ 	bytes = min_t(u32, bytes, gso_max_size - 1 - MAX_TCP_HEADER);
+-	segs = max_t(u32, bytes / mss_now, bbr_min_tso_segs(sk));
++	segs = max_t(u32, div_u64(bytes, mss_now), bbr_min_tso_segs(sk));
+ 	return segs;
+ }
+ 
+-- 
+2.39.2
+
