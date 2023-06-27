@@ -1,18 +1,18 @@
-From 3a024a88f2316650d4430d2b61cce181614c316e Mon Sep 17 00:00:00 2001
+From ac9b2718fd42768e652baaa96bd7c4db066cde0d Mon Sep 17 00:00:00 2001
 From: Felix Fietkau <nbd@nbd.name>
 Date: Tue, 20 Feb 2018 15:56:02 +0100
-Subject: [PATCH 2/2] netfilter: add xt_FLOWOFFLOAD target
+Subject: [PATCH 2/2] netfilter: add xt_FLOWOFFLOAD target rev_2
 
 Signed-off-by: Felix Fietkau <nbd@nbd.name>
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
  include/net/netfilter/nf_flow_table.h         |   5 +
  include/uapi/linux/netfilter/xt_FLOWOFFLOAD.h |  17 +
- net/netfilter/Kconfig                         |  14 +-
+ net/netfilter/Kconfig                         |   9 +
  net/netfilter/Makefile                        |   1 +
  net/netfilter/nf_flow_table_core.c            |   5 +-
  net/netfilter/xt_FLOWOFFLOAD.c                | 698 ++++++++++++++++++
- 6 files changed, 734 insertions(+), 6 deletions(-)
+ 6 files changed, 732 insertions(+), 3 deletions(-)
  create mode 100644 include/uapi/linux/netfilter/xt_FLOWOFFLOAD.h
  create mode 100644 net/netfilter/xt_FLOWOFFLOAD.c
 
@@ -56,33 +56,10 @@ index 000000000000..5841bbe0e3db
 +
 +#endif /* _XT_FLOWOFFLOAD_H */
 diff --git a/net/netfilter/Kconfig b/net/netfilter/Kconfig
-index 3dff9d8bf50b..ae5ddebcd32f 100644
+index 3dff9d8bf50b..2c32cefa2571 100644
 --- a/net/netfilter/Kconfig
 +++ b/net/netfilter/Kconfig
-@@ -728,8 +728,6 @@ config NFT_REJECT_NETDEV
- 
- endif # NF_TABLES_NETDEV
- 
--endif # NF_TABLES
--
- config NF_FLOW_TABLE_INET
- 	tristate "Netfilter flow table mixed IPv4/IPv6 module"
- 	depends on NF_FLOW_TABLE
-@@ -738,11 +736,12 @@ config NF_FLOW_TABLE_INET
- 
- 	  To compile it as a module, choose M here.
- 
-+endif # NF_TABLES
-+
- config NF_FLOW_TABLE
- 	tristate "Netfilter flow table module"
- 	depends on NETFILTER_INGRESS
- 	depends on NF_CONNTRACK
--	depends on NF_TABLES
- 	help
- 	  This option adds the flow table core infrastructure.
- 
-@@ -1039,6 +1038,15 @@ config NETFILTER_XT_TARGET_NOTRACK
+@@ -1039,6 +1039,15 @@ config NETFILTER_XT_TARGET_NOTRACK
  	depends on NETFILTER_ADVANCED
  	select NETFILTER_XT_TARGET_CT
  
@@ -845,5 +822,5 @@ index 000000000000..99cccdaba650
 +module_init(xt_flowoffload_tg_init);
 +module_exit(xt_flowoffload_tg_exit);
 -- 
-2.39.1
+2.39.2
 
