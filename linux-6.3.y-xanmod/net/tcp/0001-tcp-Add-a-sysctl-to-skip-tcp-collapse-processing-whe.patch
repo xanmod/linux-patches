@@ -1,7 +1,7 @@
 From 62c64e3361e6e8c1bf4c5d2ab21b5db696b020d5 Mon Sep 17 00:00:00 2001
 From: "mfreemon@cloudflare.com" <mfreemon@cloudflare.com>
 Date: Tue, 1 Mar 2022 17:06:02 -0600
-Subject: [PATCH] tcp: Add a sysctl to skip tcp collapse processing when the
+Subject: [PATCH 1/2] tcp: Add a sysctl to skip tcp collapse processing when the
  receive buffer is full
 
 For context and additional information about this patch, see the
