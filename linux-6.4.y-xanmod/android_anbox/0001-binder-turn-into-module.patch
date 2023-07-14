@@ -1,9 +1,33 @@
-From 13c7af4163631da0d483379bea6e98f3da720d38 Mon Sep 17 00:00:00 2001
+From 7a93146be73ac5c6e12b3f30636c9850a0cb54e2 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <christian@brauner.io>
-Date: Mon, 24 Apr 2023 20:46:01 +0000
-Subject: [PATCH 1/2] binder: turn into module
+Date: Wed, 16 Jan 2019 23:13:25 +0100
+Subject: [PATCH 1/3] binder: turn into module
 
-Rebased-by: Alexandre Frade <kernel@xanmod.org>
+The Android binder driver needs to become a module for the sake of shipping
+Anbox. To do this we need to export the following functions since binder is
+currently still using them:
+
+- security_binder_set_context_mgr()
+- security_binder_transaction()
+- security_binder_transfer_binder()
+- security_binder_transfer_file()
+- can_nice()
+- __close_fd_get_file()
+- mmput_async()
+- task_work_add()
+- map_kernel_range_noflush()
+- get_vm_area()
+- zap_page_range_single()
+- put_ipc_ns()
+- get_ipc_ns_exported()
+- show_init_ipc_ns()
+
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+[ saf: fix additional reference to init_ipc_ns from 5.0-rc6 ]
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+[ arighi: fix EXPORT_SYMBOL vs EXPORT_SYMBOL_GPL change from 6.0-rc5 ]
+[ arighi: zap_page_range() has been dropped, export zap_page_range_single() in 6.3 ]
+Signed-off-by: Andrea Righi <andrea.righi@canonical.com>
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
  drivers/android/Kconfig           |  6 +++---
@@ -16,12 +40,11 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  include/linux/ipc_namespace.h     |  3 +++
  ipc/namespace.c                   | 17 +++++++++++++++++
  kernel/sched/core.c               |  1 +
- kernel/sched/wait.c               |  1 +
  kernel/task_work.c                |  1 +
  mm/memory.c                       |  1 +
  mm/vmalloc.c                      |  1 +
  security/security.c               |  4 ++++
- 15 files changed, 62 insertions(+), 15 deletions(-)
+ 14 files changed, 61 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/android/Kconfig b/drivers/android/Kconfig
 index 07aa8ae0a058..fe5287e3525b 100644
@@ -241,18 +264,6 @@ index 5901b6352eba..80ac12971c56 100644
  
  #ifdef __ARCH_WANT_SYS_NICE
  
-diff --git a/kernel/sched/wait.c b/kernel/sched/wait.c
-index 1647fb8662eb..bfe8988fbe99 100644
---- a/kernel/sched/wait.c
-+++ b/kernel/sched/wait.c
-@@ -258,6 +258,7 @@ void __wake_up_pollfree(struct wait_queue_head *wq_head)
- 	/* POLLFREE must have cleared the queue. */
- 	WARN_ON_ONCE(waitqueue_active(wq_head));
- }
-+EXPORT_SYMBOL(__wake_up_pollfree);
- 
- /*
-  * Note: we use "set_current_state()" _after_ the wait-queue add,
 diff --git a/kernel/task_work.c b/kernel/task_work.c
 index 065e1ef8fc8d..b04e9861c7ce 100644
 --- a/kernel/task_work.c
@@ -266,7 +277,7 @@ index 065e1ef8fc8d..b04e9861c7ce 100644
  /**
   * task_work_cancel_match - cancel a pending work added by task_work_add()
 diff --git a/mm/memory.c b/mm/memory.c
-index f69fbc251198..44fc14f6230d 100644
+index 07bab1e77499..0568f42b00d4 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
 @@ -1755,6 +1755,7 @@ void zap_page_range_single(struct vm_area_struct *vma, unsigned long address,

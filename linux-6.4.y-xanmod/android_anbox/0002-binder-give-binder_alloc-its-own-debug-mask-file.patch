@@ -1,7 +1,7 @@
 From d4a00f94b4e67233e67a56eb4d0c9c8290c6fa1c Mon Sep 17 00:00:00 2001
 From: Christian Brauner <christian@brauner.io>
 Date: Wed, 23 Jan 2019 21:54:23 +0100
-Subject: [PATCH 2/2] binder: give binder_alloc its own debug mask file
+Subject: [PATCH 2/3] binder: give binder_alloc its own debug mask file
 
 Currently both binder.c and binder_alloc.c both register the
 /sys/module/binder_linux/paramters/debug_mask file which leads to conflicts
