@@ -1,7 +1,7 @@
 From ab75955815bf6df39245cc1a665ff83a333f6f0a Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 29 Aug 2022 16:47:26 +0000
-Subject: [PATCH 16/18] XANMOD: Makefile: Disable GCC vectorization on trees
+Subject: [PATCH 17/19] XANMOD: Makefile: Disable GCC vectorization on trees
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---

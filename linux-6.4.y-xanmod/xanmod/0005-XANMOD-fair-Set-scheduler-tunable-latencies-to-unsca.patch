@@ -1,7 +1,7 @@
 From a50c39f14e1d7f62255d66b0ed53ba82c960ea37 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Thu, 11 May 2023 19:41:41 +0000
-Subject: [PATCH 04/18] XANMOD: fair: Set scheduler tunable latencies to
+Subject: [PATCH 05/19] XANMOD: fair: Set scheduler tunable latencies to
  unscaled
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>

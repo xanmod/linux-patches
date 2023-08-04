@@ -1,7 +1,7 @@
 From bd9f85fdc6e224835fca17787d05673ea55826e8 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 14 Dec 2020 16:24:26 +0000
-Subject: [PATCH 09/18] XANMOD: block: set rq_affinity to force full
+Subject: [PATCH 10/19] XANMOD: block: set rq_affinity to force full
  multithreading I/O requests
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>

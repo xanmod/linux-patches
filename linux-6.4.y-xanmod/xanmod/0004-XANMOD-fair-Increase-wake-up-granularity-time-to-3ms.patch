@@ -1,7 +1,7 @@
 From 5e295bc9bbd3097a8f699a5977acb7634c47c227 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Thu, 11 May 2023 19:41:41 +0000
-Subject: [PATCH 03/18] XANMOD: fair: Increase wake-up granularity time to 3ms
+Subject: [PATCH 04/19] XANMOD: fair: Increase wake-up granularity time to 3ms
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
