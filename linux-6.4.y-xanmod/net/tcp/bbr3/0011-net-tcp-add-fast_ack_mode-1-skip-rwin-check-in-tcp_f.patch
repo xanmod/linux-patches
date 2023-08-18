@@ -1,7 +1,7 @@
-From a829b48d0aca4f31238a40fd9721bfd4ef2f21a7 Mon Sep 17 00:00:00 2001
+From 53ec57842ccc0693a3fec6a31e94486c4f604b34 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Sat, 16 Nov 2019 13:16:25 -0500
-Subject: [PATCH 13/20] net-tcp: add fast_ack_mode=1: skip rwin check in
+Subject: [PATCH 11/18] net-tcp: add fast_ack_mode=1: skip rwin check in
  tcp_fast_ack_mode__tcp_ack_snd_check()
 
 Add logic for an experimental TCP connection behavior, enabled with
@@ -20,7 +20,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  4 files changed, 7 insertions(+), 3 deletions(-)
 
 diff --git a/include/linux/tcp.h b/include/linux/tcp.h
-index b4c08ac86983..4297c9176435 100644
+index 91a37c99ba66..e8f0713669fe 100644
 --- a/include/linux/tcp.h
 +++ b/include/linux/tcp.h
 @@ -255,7 +255,8 @@ struct tcp_sock {
@@ -34,7 +34,7 @@ index b4c08ac86983..4297c9176435 100644
  	u32	chrono_stat[3];	/* Time in jiffies for chrono_stat stats */
  	u8	chrono_type:2,	/* current chronograph type */
 diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
-index 8d20d9221238..99c2e0357dec 100644
+index 79f29e138fc9..f89c8aa79aad 100644
 --- a/net/ipv4/tcp.c
 +++ b/net/ipv4/tcp.c
 @@ -3192,6 +3192,7 @@ int tcp_disconnect(struct sock *sk, int flags)
@@ -58,10 +58,10 @@ index 1b34050a7538..66d40449b3f4 100644
  		icsk->icsk_ca_ops->init(sk);
  	if (tcp_ca_needs_ecn(sk))
 diff --git a/net/ipv4/tcp_input.c b/net/ipv4/tcp_input.c
-index 9815e8517eb5..3ae56b0676a8 100644
+index 313f8d4f26a9..21d1d66dc942 100644
 --- a/net/ipv4/tcp_input.c
 +++ b/net/ipv4/tcp_input.c
-@@ -5539,13 +5539,14 @@ static void __tcp_ack_snd_check(struct sock *sk, int ofo_possible)
+@@ -5581,13 +5581,14 @@ static void __tcp_ack_snd_check(struct sock *sk, int ofo_possible)
  
  	    /* More than one full frame received... */
  	if (((tp->rcv_nxt - tp->rcv_wup) > inet_csk(sk)->icsk_ack.rcv_mss &&

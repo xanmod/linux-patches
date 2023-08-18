@@ -1,7 +1,7 @@
-From ad8bf2b17a2d01fc451d0d669bd2180725633c0e Mon Sep 17 00:00:00 2001
+From 8cbca6da2cbe16362c99f8cecbd633914a2e5827 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Tue, 7 Aug 2018 21:52:06 -0400
-Subject: [PATCH 06/20] net-tcp_bbr: v2: introduce ca_ops->skb_marked_lost() CC
+Subject: [PATCH 06/18] net-tcp_bbr: v2: introduce ca_ops->skb_marked_lost() CC
  module callback API
 
 For connections experiencing reordering, RACK can mark packets lost
@@ -29,7 +29,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  2 files changed, 8 insertions(+)
 
 diff --git a/include/net/tcp.h b/include/net/tcp.h
-index 34c1e30fdb5a..b8f8957827e2 100644
+index 800b06240deb..d57672aa0908 100644
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
 @@ -1102,6 +1102,9 @@ struct tcp_congestion_ops {
@@ -43,7 +43,7 @@ index 34c1e30fdb5a..b8f8957827e2 100644
  	 * after all the ca_state processing. (optional)
  	 */
 diff --git a/net/ipv4/tcp_input.c b/net/ipv4/tcp_input.c
-index d119def3e500..3faa2901b9ea 100644
+index cad94767e692..4750a5a24453 100644
 --- a/net/ipv4/tcp_input.c
 +++ b/net/ipv4/tcp_input.c
 @@ -1079,7 +1079,12 @@ static void tcp_verify_retransmit_hint(struct tcp_sock *tp, struct sk_buff *skb)

@@ -1,7 +1,7 @@
-From e3d1c013e63ed31b28f5940005a9d4790aa43474 Mon Sep 17 00:00:00 2001
+From c330ec7ca132b745debc68f6f794643fe90a92e5 Mon Sep 17 00:00:00 2001
 From: Yousuk Seung <ysseung@google.com>
 Date: Wed, 23 May 2018 17:55:54 -0700
-Subject: [PATCH 11/20] net-tcp: add new ca opts flag TCP_CONG_WANTS_CE_EVENTS
+Subject: [PATCH 09/18] net-tcp: add new ca opts flag TCP_CONG_WANTS_CE_EVENTS
 
 Add a a new ca opts flag TCP_CONG_WANTS_CE_EVENTS that allows a
 congestion control module to receive CE events.
@@ -22,7 +22,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  2 files changed, 15 insertions(+), 3 deletions(-)
 
 diff --git a/include/net/tcp.h b/include/net/tcp.h
-index c10d95e429eb..2c9101a8d65c 100644
+index 381d17fb9b6d..10a21f5a9a6f 100644
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
 @@ -1037,7 +1037,11 @@ enum tcp_ca_ack_event_flags {
@@ -54,7 +54,7 @@ index c10d95e429eb..2c9101a8d65c 100644
  {
  	const struct inet_connection_sock *icsk = inet_csk(sk);
 diff --git a/net/ipv4/tcp_input.c b/net/ipv4/tcp_input.c
-index a4d4ca242e47..9815e8517eb5 100644
+index 51c281c2cfd9..313f8d4f26a9 100644
 --- a/net/ipv4/tcp_input.c
 +++ b/net/ipv4/tcp_input.c
 @@ -349,7 +349,7 @@ static void __tcp_ecn_check_ce(struct sock *sk, const struct sk_buff *skb)
