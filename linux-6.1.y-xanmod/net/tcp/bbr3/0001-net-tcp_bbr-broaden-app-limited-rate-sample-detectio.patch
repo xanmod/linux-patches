@@ -1,7 +1,7 @@
-From 6aa56f07fee57e6163b86cfa9ce6ef91a6d77496 Mon Sep 17 00:00:00 2001
+From 247736e1b64c6acb6a0e2040f630bb9e8dd8312c Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Tue, 11 Jun 2019 12:26:55 -0400
-Subject: [PATCH 01/21] net-tcp_bbr: broaden app-limited rate sample detection
+Subject: [PATCH 01/18] net-tcp_bbr: broaden app-limited rate sample detection
 
 This commit is a bug fix for the Linux TCP app-limited
 (application-limited) logic that is used for collecting rate
@@ -31,28 +31,29 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  2 files changed, 2 insertions(+)
 
 diff --git a/net/ipv4/tcp_input.c b/net/ipv4/tcp_input.c
-index 0640453fce54..1a308993c371 100644
+index 00e654962a15..dbe8a6fc6647 100644
 --- a/net/ipv4/tcp_input.c
 +++ b/net/ipv4/tcp_input.c
-@@ -3812,6 +3812,7 @@ static int tcp_ack(struct sock *sk, const struct sk_buff *skb, int flag)
-
-	prior_fack = tcp_is_sack(tp) ? tcp_highest_sack_seq(tp) : tp->snd_una;
-	rs.prior_in_flight = tcp_packets_in_flight(tp);
+@@ -3818,6 +3818,7 @@ static int tcp_ack(struct sock *sk, const struct sk_buff *skb, int flag)
+ 
+ 	prior_fack = tcp_is_sack(tp) ? tcp_highest_sack_seq(tp) : tp->snd_una;
+ 	rs.prior_in_flight = tcp_packets_in_flight(tp);
 +	tcp_rate_check_app_limited(sk);
-
-	/* ts_recent update must be made after we are sure that the packet
-	 * is in window.
+ 
+ 	/* ts_recent update must be made after we are sure that the packet
+ 	 * is in window.
 diff --git a/net/ipv4/tcp_timer.c b/net/ipv4/tcp_timer.c
-index cb79127f45c3..70e4de876a7f 100644
+index 0b5d0a2867a8..c2bc56da653c 100644
 --- a/net/ipv4/tcp_timer.c
 +++ b/net/ipv4/tcp_timer.c
-@@ -605,6 +605,7 @@ void tcp_write_timer_handler(struct sock *sk)
-		return;
-	}
-
+@@ -615,6 +615,7 @@ void tcp_write_timer_handler(struct sock *sk)
+ 		return;
+ 	}
+ 
 +	tcp_rate_check_app_limited(sk);
-	tcp_mstamp_refresh(tcp_sk(sk));
-	event = icsk->icsk_pending;
+ 	tcp_mstamp_refresh(tcp_sk(sk));
+ 	event = icsk->icsk_pending;
+ 
+-- 
+2.39.2
 
---
-2.35.1

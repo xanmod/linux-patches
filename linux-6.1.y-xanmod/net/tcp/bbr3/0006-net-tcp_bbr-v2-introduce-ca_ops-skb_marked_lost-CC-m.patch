@@ -1,7 +1,7 @@
-From a66c34234ed0560c24d8a7a5ebdf668eadc309e7 Mon Sep 17 00:00:00 2001
+From a9469cb874ca7fcc9a4931056208a81d418202ad Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Tue, 7 Aug 2018 21:52:06 -0400
-Subject: [PATCH 06/21] net-tcp_bbr: v2: introduce ca_ops->skb_marked_lost() CC
+Subject: [PATCH 06/18] net-tcp_bbr: v2: introduce ca_ops->skb_marked_lost() CC
  module callback API
 
 For connections experiencing reordering, RACK can mark packets lost
@@ -29,21 +29,21 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  2 files changed, 8 insertions(+)
 
 diff --git a/include/net/tcp.h b/include/net/tcp.h
-index f12b6fa0edf0..8ea8441b2d44 100644
+index 0883562dfaa2..f4b3cc91c284 100644
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
-@@ -1101,6 +1101,9 @@ struct tcp_congestion_ops {
-	/* override sysctl_tcp_min_tso_segs */
-	u32 (*min_tso_segs)(struct sock *sk);
-
+@@ -1102,6 +1102,9 @@ struct tcp_congestion_ops {
+ 	/* override sysctl_tcp_min_tso_segs */
+ 	u32 (*min_tso_segs)(struct sock *sk);
+ 
 +	/* react to a specific lost skb (optional) */
 +	void (*skb_marked_lost)(struct sock *sk, const struct sk_buff *skb);
 +
-	/* call when packets are delivered to update cwnd and pacing rate,
-	 * after all the ca_state processing. (optional)
-	 */
+ 	/* call when packets are delivered to update cwnd and pacing rate,
+ 	 * after all the ca_state processing. (optional)
+ 	 */
 diff --git a/net/ipv4/tcp_input.c b/net/ipv4/tcp_input.c
-index b089111bbe62..8f76bdea1bd9 100644
+index 8bccd2489b0b..ec56612cd4d4 100644
 --- a/net/ipv4/tcp_input.c
 +++ b/net/ipv4/tcp_input.c
 @@ -1079,7 +1079,12 @@ static void tcp_verify_retransmit_hint(struct tcp_sock *tp, struct sk_buff *skb)
@@ -53,11 +53,12 @@ index b089111bbe62..8f76bdea1bd9 100644
 +	struct sock *sk = (struct sock *)tp;
 +	const struct tcp_congestion_ops *ca_ops = inet_csk(sk)->icsk_ca_ops;
 +
-	tp->lost += tcp_skb_pcount(skb);
+ 	tp->lost += tcp_skb_pcount(skb);
 +	if (ca_ops->skb_marked_lost)
 +		ca_ops->skb_marked_lost(sk, skb);
  }
-
+ 
  void tcp_mark_skb_lost(struct sock *sk, struct sk_buff *skb)
---
-2.35.1
+-- 
+2.39.2
+
