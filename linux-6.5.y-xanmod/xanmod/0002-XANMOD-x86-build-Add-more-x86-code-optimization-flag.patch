@@ -1,0 +1,31 @@
+From f42b5fbf48f3b29726c6708e703b98daf328e4ca Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Mon, 28 Aug 2023 05:00:29 +0000
+Subject: [PATCH 02/19] XANMOD: x86/build: Add more x86 code optimization flags
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ arch/x86/Makefile | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index fdc2e3abd615..7eaded3f0df3 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -60,6 +60,13 @@ export REALMODE_CFLAGS
+ # e.g.: obj-y += foo_$(BITS).o
+ export BITS
+ 
++# More compiler optimizations
++ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
++KBUILD_CFLAGS += -O3 -fexcess-precision=fast -freciprocal-math \
++		 $(call cc-option,-fcx-limited-range)
++KBUILD_RUSTFLAGS += -Copt-level=3
++endif
++
+ #
+ # Prevent GCC from generating any FP code by mistake.
+ #
+-- 
+2.39.2
+

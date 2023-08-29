@@ -1,0 +1,28 @@
+From 8e4918f74b97fe3074b79ded03860a6f3bfb2715 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Thu, 11 May 2023 19:41:41 +0000
+Subject: [PATCH 04/19] XANMOD: fair: Increase wake-up granularity time to 3ms
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ kernel/sched/fair.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index d6f9bc5ceb12..b3c2191fbe0a 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -124,8 +124,8 @@ unsigned int sysctl_sched_child_runs_first __read_mostly;
+  *
+  * (default: 1 msec * (1 + ilog(ncpus)), units: nanoseconds)
+  */
+-unsigned int sysctl_sched_wakeup_granularity			= 1000000UL;
+-static unsigned int normalized_sysctl_sched_wakeup_granularity	= 1000000UL;
++unsigned int sysctl_sched_wakeup_granularity			= 3000000UL;
++static unsigned int normalized_sysctl_sched_wakeup_granularity	= 3000000UL;
+ 
+ const_debug unsigned int sysctl_sched_migration_cost	= 500000UL;
+ 
+-- 
+2.39.2
+

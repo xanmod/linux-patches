@@ -1,0 +1,34 @@
+From d4a00f94b4e67233e67a56eb4d0c9c8290c6fa1c Mon Sep 17 00:00:00 2001
+From: Christian Brauner <christian@brauner.io>
+Date: Wed, 23 Jan 2019 21:54:23 +0100
+Subject: [PATCH 2/3] binder: give binder_alloc its own debug mask file
+
+Currently both binder.c and binder_alloc.c both register the
+/sys/module/binder_linux/paramters/debug_mask file which leads to conflicts
+in sysfs. This commit gives binder_alloc.c its own
+/sys/module/binder_linux/paramters/alloc_debug_mask file.
+
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ drivers/android/binder_alloc.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/android/binder_alloc.c b/drivers/android/binder_alloc.c
+index 662a2a2e2e84..2019dab43752 100644
+--- a/drivers/android/binder_alloc.c
++++ b/drivers/android/binder_alloc.c
+@@ -38,8 +38,7 @@ enum {
+ };
+ static uint32_t binder_alloc_debug_mask = BINDER_DEBUG_USER_ERROR;
+ 
+-module_param_named(debug_mask, binder_alloc_debug_mask,
+-		   uint, 0644);
++module_param_named(alloc_debug_mask, binder_alloc_debug_mask, uint, 0644);
+ 
+ #define binder_alloc_debug(mask, x...) \
+ 	do { \
+-- 
+2.39.2
+
