@@ -1,0 +1,27 @@
+From b32ee09a7582d93b6e86e8277f5e363b21e53085 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Mon, 29 Aug 2022 16:47:26 +0000
+Subject: [PATCH 16/18] XANMOD: Makefile: Disable GCC vectorization on trees
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ Makefile | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Makefile b/Makefile
+index 5c418efbe89b..e8ff7e56e9a5 100644
+--- a/Makefile
++++ b/Makefile
+@@ -994,6 +994,9 @@ NOSTDINC_FLAGS += -nostdinc
+ # perform bounds checking.
+ KBUILD_CFLAGS += $(call cc-option, -fstrict-flex-arrays=3)
+ 
++# disable GCC vectorization on trees
++KBUILD_CFLAGS	+= $(call cc-option, -fno-tree-vectorize)
++
+ # disable invalid "can't wrap" optimizations for signed / pointers
+ KBUILD_CFLAGS	+= -fno-strict-overflow
+ 
+-- 
+2.39.2
+
