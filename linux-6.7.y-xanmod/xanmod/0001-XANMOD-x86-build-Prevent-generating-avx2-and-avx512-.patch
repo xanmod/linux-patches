@@ -1,0 +1,29 @@
+From 08f1f0b8506d1795894800484c3fca8df0261bd7 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Thu, 3 Aug 2023 13:53:49 +0000
+Subject: [PATCH 01/18] XANMOD: x86/build: Prevent generating avx2 and avx512
+ floating-point code
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ arch/x86/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index 1a068de12a56..1e8c6eba6c96 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -67,8 +67,8 @@ export BITS
+ #
+ #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53383
+ #
+-KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx
+-KBUILD_RUSTFLAGS += -Ctarget-feature=-sse,-sse2,-sse3,-ssse3,-sse4.1,-sse4.2,-avx,-avx2
++KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -mno-avx2 -mno-avx512f
++KBUILD_RUSTFLAGS += -Ctarget-feature=-sse,-sse2,-sse3,-ssse3,-sse4.1,-sse4.2,-avx,-avx2,-avx512f
+ 
+ ifeq ($(CONFIG_X86_KERNEL_IBT),y)
+ #
+-- 
+2.39.2
+
