@@ -56,9 +56,9 @@ index 6416cd66631b..5398a2b09e25 100644
 +		tp->ecn_flags |= TCP_ECN_LOW;
 +}
 +
+ u32 tcp_delack_max(const struct sock *sk);
+ 
  /* Compute the actual rto_min value */
- static inline u32 tcp_rto_min(struct sock *sk)
- {
 diff --git a/include/uapi/linux/rtnetlink.h b/include/uapi/linux/rtnetlink.h
 index 51c13cf9c5ae..de8dcba26bec 100644
 --- a/include/uapi/linux/rtnetlink.h
