@@ -1,7 +1,7 @@
-From 5510cb133c30fb596549b02944412317a426b9ae Mon Sep 17 00:00:00 2001
+From 253010daf87814c006f0f146abbabc9a6274b2ad Mon Sep 17 00:00:00 2001
 From: graysky <therealgraysky@proton.me>
 Date: Thu, 5 Jan 2023 14:29:37 -0500
-Subject: [PATCH 1/2] x86/kconfig: more uarches for kernel 5.17+ [xm_rev4]
+Subject: [PATCH 1/2] x86/kconfig: more uarches for kernel 5.17+ [xm_rev5]
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -37,7 +37,7 @@ CPU-specific microarchitectures include:
 • AMD Family 17h (Zen)
 • AMD Family 17h (Zen 2)
 • AMD Family 19h (Zen 3)†
-• AMD Family 19h (Zen 4)£
+• AMD Family 19h (Zen 4)§
 • Intel Silvermont low-power processors
 • Intel Goldmont low-power processors (Apollo Lake and Denverton)
 • Intel Goldmont Plus low-power processors (Gemini Lake)
@@ -65,8 +65,7 @@ Notes: If not otherwise noted, gcc >=9.1 is required for support.
        *Requires gcc >=10.1 or clang >=10.0
        †Required gcc >=10.3 or clang >=12.0
        ‡Required gcc >=11.1 or clang >=12.0
-       £Required gcc >=12.3 or clang >=16.0
-       §Required gcc >=13.0 or clang >=16.0
+       §Required gcc >=12.3 or clang >=16.0
 
 It also offers to compile passing the 'native' option which, "selects the CPU
 to generate code for at compilation time by determining the processor type of
@@ -114,7 +113,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  3 files changed, 528 insertions(+), 17 deletions(-)
 
 diff --git a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
-index 00468adf180f..19ed382163f2 100644
+index 87396575cfa7..4d514b58fd56 100644
 --- a/arch/x86/Kconfig.cpu
 +++ b/arch/x86/Kconfig.cpu
 @@ -157,7 +157,7 @@ config MPENTIUM4
@@ -626,9 +625,9 @@ index 00468adf180f..19ed382163f2 100644
  config X86_MINIMUM_CPU_FAMILY
  	int
  	default "64" if X86_64
--	default "6" if X86_32 && (MPENTIUM4 || MPENTIUMM || MPENTIUMIII || MPENTIUMII || M686 || MVIAC3_2 || MVIAC7 || MEFFICEON || MATOM || MCRUSOE || MCORE2 || MK7 || MK8)
+-	default "6" if X86_32 && (MPENTIUM4 || MPENTIUMM || MPENTIUMIII || MPENTIUMII || M686 || MVIAC3_2 || MVIAC7 || MEFFICEON || MATOM || MCORE2 || MK7 || MK8)
 +	default "6" if X86_32 && (MPENTIUM4 || MPENTIUMM || MPENTIUMIII || MPENTIUMII || M686 \
-+	|| MVIAC3_2 || MVIAC7 || MEFFICEON || MATOM || MCRUSOE || MCORE2 || MK7 || MK8 ||  MK8SSE3 \
++	|| MVIAC3_2 || MVIAC7 || MEFFICEON || MATOM || MCORE2 || MK7 || MK8 ||  MK8SSE3 \
 +	|| MK10 || MBARCELONA || MBOBCAT || MJAGUAR || MBULLDOZER || MPILEDRIVER || MSTEAMROLLER \
 +	|| MEXCAVATOR || MZEN || MZEN2 || MZEN3 || MZEN4 || MNEHALEM || MWESTMERE || MSILVERMONT \
 +	|| MGOLDMONT || MGOLDMONTPLUS || MSANDYBRIDGE || MIVYBRIDGE || MHASWELL || MBROADWELL \
@@ -647,10 +646,10 @@ index 00468adf180f..19ed382163f2 100644
  config IA32_FEAT_CTL
  	def_bool y
 diff --git a/arch/x86/Makefile b/arch/x86/Makefile
-index 2ef241c8e86c..f69730867810 100644
+index 48038517764e..9d213c7615bc 100644
 --- a/arch/x86/Makefile
 +++ b/arch/x86/Makefile
-@@ -158,8 +158,48 @@ else
+@@ -157,8 +157,48 @@ else
          # FIXME - should be integrated in Makefile.cpu (Makefile_32.cpu)
          cflags-$(CONFIG_MK8)		+= -march=k8
          cflags-$(CONFIG_MPSC)		+= -march=nocona
