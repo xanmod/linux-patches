@@ -1,4 +1,4 @@
-From a7ffbbb90d6fa7025010e228657918288bb42583 Mon Sep 17 00:00:00 2001
+From bf78f0e386d87ebb5459bc103bc7f45afdd90914 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Sat, 25 Feb 2023 19:58:52 +0000
 Subject: [PATCH 2/2] XANMOD: Makefile: Move ARM and x86 instruction set
@@ -13,7 +13,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  4 files changed, 155 insertions(+), 149 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index e8ff7e56e9a5..a9eff46426a7 100644
+index 077809a20279..121e3d7fe737 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -816,6 +816,158 @@ endif # need-config
