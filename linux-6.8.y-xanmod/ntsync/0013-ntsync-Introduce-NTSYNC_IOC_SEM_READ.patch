@@ -1,0 +1,69 @@
+From 1ef7db8ec9baa623aee3f16c657d5a182a8de0c2 Mon Sep 17 00:00:00 2001
+From: Elizabeth Figura <zfigura@codeweavers.com>
+Date: Mon, 19 Feb 2024 16:38:15 -0600
+Subject: [PATCH 13/31] ntsync: Introduce NTSYNC_IOC_SEM_READ.
+
+This corresponds to the NT syscall NtQuerySemaphore().
+
+This returns the current count and maximum count of the semaphore.
+
+Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ drivers/misc/ntsync.c       | 21 +++++++++++++++++++++
+ include/uapi/linux/ntsync.h |  1 +
+ 2 files changed, 22 insertions(+)
+
+diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
+index b9b4127a6c9f..0daaeeeba051 100644
+--- a/drivers/misc/ntsync.c
++++ b/drivers/misc/ntsync.c
+@@ -528,6 +528,25 @@ static int ntsync_event_reset(struct ntsync_obj *event, void __user *argp)
+ 	return 0;
+ }
+ 
++static int ntsync_sem_read(struct ntsync_obj *sem, void __user *argp)
++{
++	struct ntsync_sem_args __user *user_args = argp;
++	struct ntsync_sem_args args;
++
++	if (sem->type != NTSYNC_TYPE_SEM)
++		return -EINVAL;
++
++	args.sem = 0;
++	spin_lock(&sem->lock);
++	args.count = sem->u.sem.count;
++	args.max = sem->u.sem.max;
++	spin_unlock(&sem->lock);
++
++	if (copy_to_user(user_args, &args, sizeof(args)))
++		return -EFAULT;
++	return 0;
++}
++
+ static int ntsync_obj_release(struct inode *inode, struct file *file)
+ {
+ 	struct ntsync_obj *obj = file->private_data;
+@@ -547,6 +566,8 @@ static long ntsync_obj_ioctl(struct file *file, unsigned int cmd,
+ 	switch (cmd) {
+ 	case NTSYNC_IOC_SEM_POST:
+ 		return ntsync_sem_post(obj, argp);
++	case NTSYNC_IOC_SEM_READ:
++		return ntsync_sem_read(obj, argp);
+ 	case NTSYNC_IOC_MUTEX_UNLOCK:
+ 		return ntsync_mutex_unlock(obj, argp);
+ 	case NTSYNC_IOC_MUTEX_KILL:
+diff --git a/include/uapi/linux/ntsync.h b/include/uapi/linux/ntsync.h
+index 72047f36c45d..42f51dc4e57e 100644
+--- a/include/uapi/linux/ntsync.h
++++ b/include/uapi/linux/ntsync.h
+@@ -51,5 +51,6 @@ struct ntsync_wait_args {
+ #define NTSYNC_IOC_EVENT_SET		_IOR ('N', 0x88, __u32)
+ #define NTSYNC_IOC_EVENT_RESET		_IOR ('N', 0x89, __u32)
+ #define NTSYNC_IOC_EVENT_PULSE		_IOR ('N', 0x8a, __u32)
++#define NTSYNC_IOC_SEM_READ		_IOR ('N', 0x8b, struct ntsync_sem_args)
+ 
+ #endif
+-- 
+2.39.2
+
