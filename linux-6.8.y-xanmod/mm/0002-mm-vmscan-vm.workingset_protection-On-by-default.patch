@@ -1,0 +1,26 @@
+From 492c6a36471586150515f55c3f4da66483d90b84 Mon Sep 17 00:00:00 2001
+From: Masahito S <firelzrd@gmail.com>
+Date: Tue, 30 Jan 2024 17:22:00 +0900
+Subject: [PATCH 2/2] mm/vmscan: vm.workingset_protection: On by default
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ mm/vmscan.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index 9f6abb36751b..bdbdddc6f68a 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -192,7 +192,7 @@ struct scan_control {
+ #define prefetchw_prev_lru_folio(_folio, _base, _field) do { } while (0)
+ #endif
+ 
+-bool sysctl_workingset_protection __read_mostly = false;
++bool sysctl_workingset_protection __read_mostly = true;
+ u8 sysctl_anon_min_ratio  __read_mostly = CONFIG_ANON_MIN_RATIO;
+ u8 sysctl_clean_low_ratio __read_mostly = CONFIG_CLEAN_LOW_RATIO;
+ u8 sysctl_clean_min_ratio __read_mostly = CONFIG_CLEAN_MIN_RATIO;
+-- 
+2.43.0
+
