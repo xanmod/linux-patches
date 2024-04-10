@@ -1,7 +1,8 @@
-From 5c8686ffbf25fcd03bdddec3305d3a9e7e6d83af Mon Sep 17 00:00:00 2001
+From 238f9c6c087709bfa41cdd0ac87de174fb2cd055 Mon Sep 17 00:00:00 2001
 From: Masahito S <firelzrd@gmail.com>
-Date: Wed, 31 Jan 2024 03:46:09 +0900
-Subject: [PATCH] mm/vmscan: Add sysctl knobs for protecting the working set
+Date: Sun, 7 Apr 2024 01:04:18 +0900
+Subject: [PATCH 1/2] mm/vmscan: Add sysctl knobs for protecting the working
+ set [le9uo-1.5]
 
 The kernel does not provide a way to protect the working set under memory
 pressure. A certain amount of anonymous and clean file pages is required by
@@ -33,17 +34,17 @@ too early invocation of OOM killer, or thrashing.
 le9uo does not fix this issue, but greatly mitigates it so that these limitations
 due to MGLRU's design/implementation isn't a problem anymore.
 
-[1] https://github.com/firelzrd/le9uo/blob/main/le9uo_patches/linux6.6-le9uo-1.3-default-on.patch
+[1] https://github.com/firelzrd/le9uo/blob/main/le9uo_patches/stable/0001-linux6.6-le9uo-1.5.patch
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
- Documentation/admin-guide/sysctl/vm.rst |  72 ++++++++++
+ Documentation/admin-guide/sysctl/vm.rst |  72 +++++++++++
  include/linux/mm.h                      |   8 ++
  kernel/sysctl.c                         |  34 +++++
- mm/Kconfig                              |  63 +++++++++
+ mm/Kconfig                              |  63 ++++++++++
  mm/mm_init.c                            |   1 +
- mm/vmscan.c                             | 170 +++++++++++++++++++++++-
- 6 files changed, 341 insertions(+), 7 deletions(-)
+ mm/vmscan.c                             | 158 ++++++++++++++++++++++--
+ 6 files changed, 329 insertions(+), 7 deletions(-)
 
 diff --git a/Documentation/admin-guide/sysctl/vm.rst b/Documentation/admin-guide/sysctl/vm.rst
 index 45ba1f4dc004..5cc069c42837 100644
@@ -281,19 +282,19 @@ index 264a2df5ecf5..4c21fdb6ec83 100644
  	bool
  
 diff --git a/mm/mm_init.c b/mm/mm_init.c
-index 77fd04c83d04..363e32b6f700 100644
+index 77fd04c83d04..5d6f3a4dbccd 100644
 --- a/mm/mm_init.c
 +++ b/mm/mm_init.c
 @@ -2760,6 +2760,7 @@ static void __init mem_init_print_info(void)
  		, K(totalhigh_pages())
  #endif
  		);
-+	printk(KERN_INFO "le9 Unofficial (le9uo) working set protection 1.3 by Masahito Suzuki (forked from hakavlad's original le9 patch)");
++	printk(KERN_INFO "le9 Unofficial (le9uo) working set protection 1.5 by Masahito Suzuki (forked from hakavlad's original le9 patch)");
  }
  
  /*
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 5f0de8e9c88b..0ac1764492c1 100644
+index 078221bdf47a..9f6abb36751b 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
 @@ -134,6 +134,15 @@ struct scan_control {
@@ -316,7 +317,7 @@ index 5f0de8e9c88b..0ac1764492c1 100644
  #define prefetchw_prev_lru_folio(_folio, _base, _field) do { } while (0)
  #endif
  
-+bool sysctl_workingset_protection __read_mostly = true;
++bool sysctl_workingset_protection __read_mostly = false;
 +u8 sysctl_anon_min_ratio  __read_mostly = CONFIG_ANON_MIN_RATIO;
 +u8 sysctl_clean_low_ratio __read_mostly = CONFIG_CLEAN_LOW_RATIO;
 +u8 sysctl_clean_min_ratio __read_mostly = CONFIG_CLEAN_MIN_RATIO;
@@ -354,33 +355,22 @@ index 5f0de8e9c88b..0ac1764492c1 100644
  	/*
  	 * If there is enough inactive page cache, we do not reclaim
  	 * anything from the anonymous working right now.
-@@ -3215,6 +3245,25 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
+@@ -3215,6 +3245,14 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
  			BUG();
  		}
  
 +		/*
 +		 * Hard protection of the working set.
++		 * Don't reclaim anon/file pages when the amount is
++		 * below the watermark of the same type.
 +		 */
-+		if (file) {
-+			/*
-+			 * Don't reclaim file pages when the amount of
-+			 * clean file pages is below vm.clean_min_ratio.
-+			 */
-+			if (sc->clean_below_min)
-+				scan = 0;
-+		} else {
-+			/*
-+			 * Don't reclaim anonymous pages when their
-+			 * amount is below vm.anon_min_ratio.
-+			 */
-+			if (sc->anon_below_min)
-+				scan = 0;
-+		}
++		if (file ? sc->clean_below_min : sc->anon_below_min)
++			scan = 0;
 +
  		nr[lru] = scan;
  	}
  }
-@@ -4597,6 +4646,23 @@ static bool lruvec_is_reclaimable(struct lruvec *lruvec, struct scan_control *sc
+@@ -4597,6 +4635,23 @@ static bool lruvec_is_reclaimable(struct lruvec *lruvec, struct scan_control *sc
  /* to protect the working set of the last N jiffies */
  static unsigned long lru_gen_min_ttl __read_mostly;
  
@@ -404,7 +394,7 @@ index 5f0de8e9c88b..0ac1764492c1 100644
  static void lru_gen_age_node(struct pglist_data *pgdat, struct scan_control *sc)
  {
  	struct mem_cgroup *memcg;
-@@ -4625,14 +4691,96 @@ static void lru_gen_age_node(struct pglist_data *pgdat, struct scan_control *sc)
+@@ -4625,14 +4680,96 @@ static void lru_gen_age_node(struct pglist_data *pgdat, struct scan_control *sc)
  	 * younger than min_ttl. However, another possibility is all memcgs are
  	 * either too small or below min.
  	 */
@@ -414,7 +404,8 @@ index 5f0de8e9c88b..0ac1764492c1 100644
 -		};
 +	invoke_oom_nomemcg(sc);
 +}
-+
+ 
+-		out_of_memory(&oc);
 +int vm_workingset_protection_update_handler(struct ctl_table *table, int write,
 +		void __user *buffer, size_t *lenp, loff_t *ppos)
 +{
@@ -423,7 +414,8 @@ index 5f0de8e9c88b..0ac1764492c1 100644
 +		return ret;
 +
 +	workingset_protection_prev_totalram = 0;
-+
+ 
+-		mutex_unlock(&oom_lock);
 +	return 0;
 +}
 +
@@ -431,16 +423,14 @@ index 5f0de8e9c88b..0ac1764492c1 100644
 +{
 +	unsigned long node_mem_total;
 +	struct sysinfo i;
- 
--		out_of_memory(&oc);
++
 +	if (!(sysctl_workingset_protection)) {
 +		sc->anon_below_min = 0;
 +		sc->clean_below_low = 0;
 +		sc->clean_below_min = 0;
 +		return;
 +	}
- 
--		mutex_unlock(&oom_lock);
++
 +	if (likely(sysctl_anon_min_ratio  ||
 +	           sysctl_clean_low_ratio ||
 +		       sysctl_clean_min_ratio)) {
@@ -507,7 +497,7 @@ index 5f0de8e9c88b..0ac1764492c1 100644
  	}
  }
  
-@@ -5141,6 +5289,8 @@ static int isolate_folios(struct lruvec *lruvec, struct scan_control *sc, int sw
+@@ -5141,6 +5278,8 @@ static int isolate_folios(struct lruvec *lruvec, struct scan_control *sc, int sw
  	 */
  	if (!swappiness)
  		type = LRU_GEN_FILE;
@@ -516,7 +506,7 @@ index 5f0de8e9c88b..0ac1764492c1 100644
  	else if (min_seq[LRU_GEN_ANON] < min_seq[LRU_GEN_FILE])
  		type = LRU_GEN_ANON;
  	else if (swappiness == 1)
-@@ -5150,7 +5300,7 @@ static int isolate_folios(struct lruvec *lruvec, struct scan_control *sc, int sw
+@@ -5150,7 +5289,7 @@ static int isolate_folios(struct lruvec *lruvec, struct scan_control *sc, int sw
  	else
  		type = get_type_to_scan(lruvec, swappiness, &tier);
  
@@ -525,7 +515,7 @@ index 5f0de8e9c88b..0ac1764492c1 100644
  		if (tier < 0)
  			tier = get_tier_idx(lruvec, type);
  
-@@ -5425,6 +5575,7 @@ static int shrink_one(struct lruvec *lruvec, struct scan_control *sc)
+@@ -5425,6 +5564,7 @@ static int shrink_one(struct lruvec *lruvec, struct scan_control *sc)
  	struct mem_cgroup *memcg = lruvec_memcg(lruvec);
  	struct pglist_data *pgdat = lruvec_pgdat(lruvec);
  
@@ -533,7 +523,7 @@ index 5f0de8e9c88b..0ac1764492c1 100644
  	mem_cgroup_calculate_protection(NULL, memcg);
  
  	if (mem_cgroup_below_min(NULL, memcg))
-@@ -6572,6 +6723,8 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
+@@ -6572,6 +6712,8 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
  
  	prepare_scan_count(pgdat, sc);
  
@@ -542,16 +532,15 @@ index 5f0de8e9c88b..0ac1764492c1 100644
  	shrink_node_memcgs(pgdat, sc);
  
  	flush_reclaim_state(sc);
-@@ -6660,6 +6813,9 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
+@@ -6660,6 +6802,8 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
  	 */
  	if (reclaimable)
  		pgdat->kswapd_failures = 0;
-+
-+	if (sc->clean_below_min && pgdat->kswapd_failures && !sc->priority)
++	else if (sc->clean_below_min && !sc->priority)
 +		invoke_oom(sc);
  }
  
  /*
 -- 
-2.39.2
+2.43.0
 
