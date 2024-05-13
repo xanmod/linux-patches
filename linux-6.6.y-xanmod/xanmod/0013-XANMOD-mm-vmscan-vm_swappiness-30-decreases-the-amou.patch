@@ -1,10 +1,9 @@
 From 298e508d2a5768d7e189f93a346b20c471a127aa Mon Sep 17 00:00:00 2001
-From: Alexandre Frade <admfrade@gmail.com>
+From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 29 Jan 2018 17:31:25 +0000
-Subject: [PATCH 12/17] XANMOD: mm/vmscan: vm_swappiness = 30 decreases the
+Subject: [PATCH 13/18] XANMOD: mm/vmscan: vm_swappiness = 30 decreases the
  amount of swapping
 
-Signed-off-by: Alexandre Frade <admfrade@gmail.com>
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
  mm/vmscan.c | 2 +-

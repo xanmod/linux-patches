@@ -122,7 +122,7 @@ new file mode 100644
 index 000000000000..5c9cee290ba6
 --- /dev/null
 +++ b/net/netfilter/xt_FLOWOFFLOAD.c
-@@ -0,0 +1,697 @@
+@@ -0,0 +1,698 @@
 +/*
 + * Copyright (C) 2018-2021 Felix Fietkau <nbd@nbd.name>
 + *
@@ -187,7 +187,8 @@ index 000000000000..5c9cee290ba6
 +		proto = veth->h_vlan_encapsulated_proto;
 +		break;
 +	case htons(ETH_P_PPP_SES):
-+		proto = nf_flow_pppoe_proto(skb);
++		if (!nf_flow_pppoe_proto(skb, &proto))
++			return NF_ACCEPT;
 +		break;
 +	default:
 +		proto = skb->protocol;
