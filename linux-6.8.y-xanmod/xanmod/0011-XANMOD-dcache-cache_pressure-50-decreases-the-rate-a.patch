@@ -1,10 +1,9 @@
 From 48468bd3fc867db154affda843859717b8304e16 Mon Sep 17 00:00:00 2001
-From: Alexandre Frade <admfrade@gmail.com>
+From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 29 Jan 2018 16:59:22 +0000
-Subject: [PATCH 11/17] XANMOD: dcache: cache_pressure = 50 decreases the rate
+Subject: [PATCH 11/18] XANMOD: dcache: cache_pressure = 50 decreases the rate
  at which VFS caches are reclaimed
 
-Signed-off-by: Alexandre Frade <admfrade@gmail.com>
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
  fs/dcache.c | 2 +-

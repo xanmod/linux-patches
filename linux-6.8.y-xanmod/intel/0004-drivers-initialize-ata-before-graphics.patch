@@ -1,7 +1,7 @@
 From 12e4eaa3877ab959b5f567e96cb6c256a48b5a3a Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 2 Jun 2016 23:36:32 -0500
-Subject: [PATCH 5/5] drivers: initialize ata before graphics
+Subject: [PATCH 4/4] drivers: initialize ata before graphics
 
 ATA init is the long pole in the boot process, and its asynchronous.
 move the graphics init after it so that ata and graphics initialize

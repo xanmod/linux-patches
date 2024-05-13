@@ -1,7 +1,7 @@
 From bcd79b42d9d1633e795ea3c0b1d621ffe616bf16 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Sun, 18 Feb 2018 23:35:41 +0000
-Subject: [PATCH 4/5] locking: rwsem: spin faster
+Subject: [PATCH 3/4] locking: rwsem: spin faster
 
 tweak rwsem owner spinning a bit
 

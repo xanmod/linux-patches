@@ -1,10 +1,9 @@
 From 911aaf05a918c40eaf62c4b7c81afbd62e205b6e Mon Sep 17 00:00:00 2001
-From: Alexandre Frade <admfrade@gmail.com>
+From: Alexandre Frade <kernel@xanmod.org>
 Date: Tue, 31 Mar 2020 13:32:08 -0300
-Subject: [PATCH 14/17] XANMOD: cpufreq: tunes ondemand and conservative
+Subject: [PATCH 15/18] XANMOD: cpufreq: tunes ondemand and conservative
  governor for performance
 
-Signed-off-by: Alexandre Frade <admfrade@gmail.com>
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---
  drivers/cpufreq/cpufreq_conservative.c | 8 ++++----

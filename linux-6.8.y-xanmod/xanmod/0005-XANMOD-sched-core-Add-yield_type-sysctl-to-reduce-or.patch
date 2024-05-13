@@ -1,7 +1,7 @@
 From b5bad45f043a4317ce43de98bd63edf18e3a24b3 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Thu, 15 Sep 2022 02:45:40 +0000
-Subject: [PATCH 05/17] XANMOD: sched/core: Add yield_type sysctl to reduce or
+Subject: [PATCH 05/18] XANMOD: sched/core: Add yield_type sysctl to reduce or
  disable sched_yield
 
 [1] https://github.com/hamadmarri/cacule-cpu-scheduler/issues/35

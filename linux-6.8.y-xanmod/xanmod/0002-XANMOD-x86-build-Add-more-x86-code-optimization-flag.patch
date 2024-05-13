@@ -1,7 +1,7 @@
 From 7efb4f907107000d546eab25b5d528db2182ea90 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 28 Aug 2023 05:00:29 +0000
-Subject: [PATCH 02/17] XANMOD: x86/build: Add more x86 code optimization flags
+Subject: [PATCH 02/18] XANMOD: x86/build: Add more x86 code optimization flags
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
 ---

@@ -1,7 +1,7 @@
 From 1dfe3f06b90b96164f4b488924b293f96069c979 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Thu, 3 Aug 2023 13:53:49 +0000
-Subject: [PATCH 01/17] XANMOD: x86/build: Prevent generating avx2 and avx512
+Subject: [PATCH 01/18] XANMOD: x86/build: Prevent generating avx2 and avx512
  floating-point code
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>

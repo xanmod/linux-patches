@@ -1,7 +1,7 @@
 From b798d5a785a5b4f2a0f72433400a3f2a9e3595f3 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Wed, 5 Oct 2022 03:46:34 +0000
-Subject: [PATCH 06/17] XANMOD: rcu: Change sched_setscheduler_nocheck() calls
+Subject: [PATCH 06/18] XANMOD: rcu: Change sched_setscheduler_nocheck() calls
  to SCHED_RR policy
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
