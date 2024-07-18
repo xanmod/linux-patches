@@ -1791,7 +1791,7 @@ index 40462b6054bc..fa9138dfe1a6 100644
 +}
 +
 +/* How should we multiplicatively cut bw or inflight limits based on ECN? */
-+u32 bbr_ecn_cut(struct sock *sk)
++static u32 bbr_ecn_cut(struct sock *sk)
 +{
 +	struct bbr *bbr = inet_csk_ca(sk);
 +
@@ -2512,7 +2512,7 @@ index 40462b6054bc..fa9138dfe1a6 100644
 +	return false;
 +}
 +
-+__bpf_kfunc void bbr_main(struct sock *sk, const struct rate_sample *rs)
++__bpf_kfunc static void bbr_main(struct sock *sk, const struct rate_sample *rs)
 +{
 +	struct tcp_sock *tp = tcp_sk(sk);
 +	struct bbr *bbr = inet_csk_ca(sk);
