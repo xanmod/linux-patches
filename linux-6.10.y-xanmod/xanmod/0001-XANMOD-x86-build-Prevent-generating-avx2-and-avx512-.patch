@@ -1,0 +1,30 @@
+From 758ccdad5ca86679447c258a41a426dc839e5cd9 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Thu, 3 Aug 2023 13:53:49 +0000
+Subject: [PATCH 01/20] XANMOD: x86/build: Prevent generating avx2 and avx512
+ floating-point code
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ arch/x86/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index 801fd85c3ef6..197c52f38843 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -70,9 +70,9 @@ export BITS
+ #
+ #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53383
+ #
+-KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx
++KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -mno-avx2 -mno-avx512f
+ KBUILD_RUSTFLAGS += --target=$(objtree)/scripts/target.json
+-KBUILD_RUSTFLAGS += -Ctarget-feature=-sse,-sse2,-sse3,-ssse3,-sse4.1,-sse4.2,-avx,-avx2
++KBUILD_RUSTFLAGS += -Ctarget-feature=-sse,-sse2,-sse3,-ssse3,-sse4.1,-sse4.2,-avx,-avx2,-avx512f
+ 
+ #
+ # CFLAGS for compiling floating point code inside the kernel.
+-- 
+2.43.0
+

@@ -1,0 +1,33 @@
+From b343450ae962eb9680126c3a9f57d963bc7a2513 Mon Sep 17 00:00:00 2001
+From: Andrea Righi <andrea.righi@canonical.com>
+Date: Fri, 17 Dec 2021 11:14:24 +0100
+Subject: [PATCH 3/4] wait: allow to use __wake_up_pollfree() from GPL modules
+
+commit ebafbcf7f32d ("UBUNTU: SAUCE: binder: turn into module")
+is changing binder to be a module, but __wake_up_pollfree() can only be
+used internally by the kernel.
+
+Make __wake_up_pollfree an EXPORT_SYMBOL_GPL so that it can be used by
+the binder module.
+
+Signed-off-by: Andrea Righi <andrea.righi@canonical.com>
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ kernel/sched/wait.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/kernel/sched/wait.c b/kernel/sched/wait.c
+index c5cc616484ba..d38219b2b3f9 100644
+--- a/kernel/sched/wait.c
++++ b/kernel/sched/wait.c
+@@ -223,6 +223,7 @@ void __wake_up_pollfree(struct wait_queue_head *wq_head)
+ 	/* POLLFREE must have cleared the queue. */
+ 	WARN_ON_ONCE(waitqueue_active(wq_head));
+ }
++EXPORT_SYMBOL_GPL(__wake_up_pollfree);
+ 
+ /*
+  * Note: we use "set_current_state()" _after_ the wait-queue add,
+-- 
+2.43.0
+

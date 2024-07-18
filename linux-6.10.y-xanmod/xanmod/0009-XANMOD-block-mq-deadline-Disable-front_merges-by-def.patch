@@ -1,0 +1,27 @@
+From 24abc7be1a60697c7e010cfceca016b31ce2329c Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Thu, 6 Jan 2022 16:59:01 +0000
+Subject: [PATCH 09/20] XANMOD: block/mq-deadline: Disable front_merges by
+ default
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ block/mq-deadline.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/block/mq-deadline.c b/block/mq-deadline.c
+index 250fd877b2c3..a571f32e75dd 100644
+--- a/block/mq-deadline.c
++++ b/block/mq-deadline.c
+@@ -586,7 +586,7 @@ static int dd_init_sched(struct request_queue *q, struct elevator_type *e)
+ 	dd->fifo_expire[DD_READ] = read_expire;
+ 	dd->fifo_expire[DD_WRITE] = write_expire;
+ 	dd->writes_starved = writes_starved;
+-	dd->front_merges = 1;
++	dd->front_merges = 0;
+ 	dd->last_dir = DD_WRITE;
+ 	dd->fifo_batch = fifo_batch;
+ 	dd->prio_aging_expire = prio_aging_expire;
+-- 
+2.43.0
+

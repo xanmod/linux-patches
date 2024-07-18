@@ -1,0 +1,27 @@
+From 19c8dc7d70a8c472e8fc22f41881dd8227cc5387 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Mon, 15 Jul 2024 04:33:05 +0000
+Subject: [PATCH 06/20] XANMOD: sched/core: Increase number of tasks to iterate
+ in a single balance run
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ kernel/sched/sched.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index ef20c61004eb..f9938abace53 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -2547,7 +2547,7 @@ extern void wakeup_preempt(struct rq *rq, struct task_struct *p, int flags);
+ #ifdef CONFIG_PREEMPT_RT
+ #define SCHED_NR_MIGRATE_BREAK 8
+ #else
+-#define SCHED_NR_MIGRATE_BREAK 32
++#define SCHED_NR_MIGRATE_BREAK 64
+ #endif
+ 
+ extern const_debug unsigned int sysctl_sched_nr_migrate;
+-- 
+2.43.0
+

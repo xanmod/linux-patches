@@ -1,0 +1,37 @@
+From 1553acceda5af3ef7184f0a7d3650cafd41b11ad Mon Sep 17 00:00:00 2001
+From: Felix Fietkau <nbd@openwrt.org>
+Date: Sat, 5 Dec 2015 15:07:03 +0100
+Subject: [PATCH] mac80211: ignore AP power level when tx power type is "fixed"
+
+In some cases a user might want to connect to a far away access point,
+which announces a low tx power limit. Using the AP's power limit can
+make the connection significantly more unstable or even impossible, and
+mac80211 currently provides no way to disable this behavior.
+
+To fix this, use the currently unused distinction between limited and
+fixed tx power to decide whether a remote AP's power limit should be
+accepted.
+
+Signed-off-by: Felix Fietkau <nbd@openwrt.org>
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ net/mac80211/iface.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/net/mac80211/iface.c b/net/mac80211/iface.c
+index b935bb5d8ed1..2196c9c2afaf 100644
+--- a/net/mac80211/iface.c
++++ b/net/mac80211/iface.c
+@@ -62,7 +62,8 @@ bool __ieee80211_recalc_txpower(struct ieee80211_sub_if_data *sdata)
+ 	if (sdata->deflink.user_power_level != IEEE80211_UNSET_POWER_LEVEL)
+ 		power = min(power, sdata->deflink.user_power_level);
+ 
+-	if (sdata->deflink.ap_power_level != IEEE80211_UNSET_POWER_LEVEL)
++	if (sdata->deflink.ap_power_level != IEEE80211_UNSET_POWER_LEVEL &&
++	    sdata->vif.bss_conf.txpower_type != NL80211_TX_POWER_FIXED)
+ 		power = min(power, sdata->deflink.ap_power_level);
+ 
+ 	if (power != sdata->vif.bss_conf.txpower) {
+-- 
+2.43.0
+
